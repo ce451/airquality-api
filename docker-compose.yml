@@ -1,0 +1,36 @@
+services:
+  db:
+    image: postgres:15
+    container_name: airquality_postgres
+    environment:
+      POSTGRES_DB: airquality_db
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: timspwftu25
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    networks:
+      - backend
+
+  api:
+    build:
+      context: .
+    container_name: airquality_api
+    ports:
+      - "8080:8080"
+    depends_on:
+      - db
+    environment:
+      SPRING_DATASOURCE_URL: jdbc:postgresql://db:5432/airquality_db
+      SPRING_DATASOURCE_USERNAME: postgres
+      SPRING_DATASOURCE_PASSWORD: timspwftu25
+      SPRING_JPA_HIBERNATE_DDL_AUTO: update
+    networks:
+      - backend
+
+volumes:
+  pgdata:
+
+networks:
+  backend:
