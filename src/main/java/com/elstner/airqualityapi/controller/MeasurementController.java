@@ -13,7 +13,6 @@ import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.mediatype.problem.Problem;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
-import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
@@ -27,15 +26,13 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.linkTo;
 @RestController
 public class MeasurementController {
     private final MeasurementRepository measurementRepository;
-    private final StationRepository stationRepository;
 
     private final MeasurementModelAssembler measurementModelAssembler;
 
     private final StationService stationService;
 
-    public MeasurementController(MeasurementRepository measurementRepository, StationRepository stationRepository, MeasurementModelAssembler measurementModelAssembler, StationService stationService) {
+    public MeasurementController(MeasurementRepository measurementRepository, MeasurementModelAssembler measurementModelAssembler, StationService stationService) {
         this.measurementRepository = measurementRepository;
-        this.stationRepository = stationRepository;
         this.measurementModelAssembler = measurementModelAssembler;
         this.stationService = stationService;
     }

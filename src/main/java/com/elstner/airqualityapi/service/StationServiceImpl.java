@@ -16,13 +16,12 @@ public class StationServiceImpl implements StationService {
 
     @Override
     public Station getOrCreateStation(String ipAddress) {
-        var station = stationRepository.findByIpAddress(ipAddress)
+        return stationRepository.findByIpAddress(ipAddress)
                 .orElseGet(() -> {
                     Station newStation = new Station();
                     newStation.setIpAddress(ipAddress);
                     newStation.setName(DEFAULT_STATION_NAME);
                     return stationRepository.save(newStation);
                 });
-        return station;
     }
 }

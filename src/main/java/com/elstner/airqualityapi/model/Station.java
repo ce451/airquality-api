@@ -1,11 +1,7 @@
 package com.elstner.airqualityapi.model;
 
 import jakarta.persistence.Entity;
-import jakarta.persistence.GeneratedValue;
-import jakarta.persistence.GenerationType;
 import jakarta.persistence.Id;
-
-import static org.yaml.snakeyaml.nodes.Tag.STR;
 
 @Entity
 public class Station {
