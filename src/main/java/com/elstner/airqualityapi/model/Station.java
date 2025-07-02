@@ -1,7 +1,6 @@
 package com.elstner.airqualityapi.model;
 
-import jakarta.persistence.Entity;
-import jakarta.persistence.Id;
+import jakarta.persistence.*;
 
 @Entity
 public class Station {
