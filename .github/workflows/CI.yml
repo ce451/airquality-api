@@ -41,4 +41,4 @@ jobs:
       with:
         context: .
         push: true
-        tags: gt86willhaben/air-quality:latest
+        tags: gt86willhaben/air-quality-api:latest
