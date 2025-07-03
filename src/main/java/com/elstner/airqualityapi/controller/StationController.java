@@ -1,6 +1,6 @@
 package com.elstner.airqualityapi.controller;
 
-import com.elstner.airqualityapi.assembler.StationModelAssembler;
+import com.elstner.airqualityapi.assembler.StationEntityAssembler;
 import com.elstner.airqualityapi.model.Station;
 import com.elstner.airqualityapi.model.StationStatus;
 import com.elstner.airqualityapi.repository.StationRepository;
@@ -19,17 +19,17 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 public class StationController {
 
     private final StationRepository stationRepository;
-    private final StationModelAssembler stationModelAssembler;
+    private final StationEntityAssembler stationEntityAssembler;
 
-    public StationController(StationRepository stationRepository, StationModelAssembler stationModelAssembler) {
+    public StationController(StationRepository stationRepository, StationEntityAssembler stationEntityAssembler) {
         this.stationRepository = stationRepository;
-        this.stationModelAssembler = stationModelAssembler;
+        this.stationEntityAssembler = stationEntityAssembler;
     }
 
     @GetMapping("/stations")
     public CollectionModel<EntityModel<Station>> all() {
         List<EntityModel<Station>> stations = stationRepository.findAll().stream()
-                .map(stationModelAssembler::toModel)
+                .map(stationEntityAssembler::toModel)
                 .collect(Collectors.toList());
 
         return CollectionModel.of(stations,
@@ -39,7 +39,7 @@ public class StationController {
     @GetMapping("/stations/new")
     public CollectionModel<EntityModel<Station>> newStations() {
         List<EntityModel<Station>> stations = stationRepository.findByStatus(StationStatus.NEW).stream()
-                .map(stationModelAssembler::toModel)
+                .map(stationEntityAssembler::toModel)
                 .collect(Collectors.toList());
 
         return CollectionModel.of(stations,
@@ -61,7 +61,7 @@ public class StationController {
 
         return ResponseEntity
                 .ok()
-                .body(stationModelAssembler.toModel(station));
+                .body(stationEntityAssembler.toModel(station));
     }
 
     @GetMapping("/stations/lastMeasurements")
@@ -74,7 +74,7 @@ public class StationController {
             return  null;
         }
 
-        return stationModelAssembler.toModel(station);
+        return stationEntityAssembler.toModel(station);
     }
 
     @PostMapping("/stations")
@@ -82,7 +82,7 @@ public class StationController {
         stationRepository.save(station);
         return ResponseEntity
                 .created(linkTo(methodOn(StationController.class).one(station.getId())).toUri())
-                .body(stationModelAssembler.toModel(station));
+                .body(stationEntityAssembler.toModel(station));
     }
 
     @PutMapping("/stations/{id}")
@@ -103,7 +103,7 @@ public class StationController {
 
         return ResponseEntity
                 .ok()
-                .body(stationModelAssembler.toModel(updatedStation)
+                .body(stationEntityAssembler.toModel(updatedStation)
                         .add(linkTo(methodOn(StationController.class).one(updatedStation.getId())).withSelfRel()));
     }
 
@@ -123,7 +123,7 @@ public class StationController {
         }
         return ResponseEntity
                 .ok()
-                .body(stationModelAssembler.toModel(updatedStation)
+                .body(stationEntityAssembler.toModel(updatedStation)
                         .add(linkTo(methodOn(StationController.class).one(updatedStation.getId())).withSelfRel()));
     }
 
