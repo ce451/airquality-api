@@ -6,7 +6,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 public class VersionController {
-    @Value("${application.version}")
+    @Value("${spring.application.version}")
     private  String version;
 
     @GetMapping("/version")
