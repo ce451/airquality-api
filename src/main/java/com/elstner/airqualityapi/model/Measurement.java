@@ -1,6 +1,9 @@
 package com.elstner.airqualityapi.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
+import org.hibernate.annotations.OnDelete;
+import org.hibernate.annotations.OnDeleteAction;
 
 import java.time.LocalDateTime;
 import java.util.UUID;
@@ -13,8 +16,9 @@ public class Measurement {
 
     @ManyToOne
     @JoinColumn(name = "station_id")
+    @OnDelete(action = OnDeleteAction.CASCADE)
+    @JsonIgnore
     private Station station;
-
 
     private short temperature;
     private short humidity;

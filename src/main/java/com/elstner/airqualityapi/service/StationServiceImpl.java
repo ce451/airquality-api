@@ -18,9 +18,7 @@ public class StationServiceImpl implements StationService {
     public Station getOrCreateStation(String ipAddress) {
         return stationRepository.findByIpAddress(ipAddress)
                 .orElseGet(() -> {
-                    Station newStation = new Station();
-                    newStation.setIpAddress(ipAddress);
-                    newStation.setName(DEFAULT_STATION_NAME);
+                    Station newStation = new Station(DEFAULT_STATION_NAME, ipAddress);
                     return stationRepository.save(newStation);
                 });
     }

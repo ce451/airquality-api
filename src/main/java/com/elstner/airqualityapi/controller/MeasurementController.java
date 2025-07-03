@@ -3,7 +3,6 @@ package com.elstner.airqualityapi.controller;
 import com.elstner.airqualityapi.assembler.MeasurementModelAssembler;
 import com.elstner.airqualityapi.model.Measurement;
 import com.elstner.airqualityapi.repository.MeasurementRepository;
-import com.elstner.airqualityapi.repository.StationRepository;
 import com.elstner.airqualityapi.service.StationService;
 import com.elstner.airqualityapi.utils.HttpUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -50,6 +49,20 @@ public class MeasurementController {
     public EntityModel<Measurement> one(@PathVariable UUID id) {
         var measurement = measurementRepository.findById(id).orElseThrow();
         return measurementModelAssembler.toModel(measurement);
+    }
+
+    @GetMapping("/stations/{stationId}/measurements")
+    public CollectionModel<EntityModel<Measurement>> getMeasurementsByStation(@PathVariable Long stationId) {
+//        var measurements = measurementRepository.findAll().stream()
+//                .filter(measurement -> measurement.getStation().getId().equals(stationId))
+//                .sorted(Comparator.comparing(Measurement::getTimestamp).reversed())
+//                .map(measurementModelAssembler::toModel)
+//                .collect(Collectors.toList());
+//        return CollectionModel.of(measurements, linkTo(MeasurementController.class).withSelfRel());
+
+        return null;
+
+//        return CollectionModel.of(measurements, linkTo(MeasurementController.class).withSelfRel());
     }
 
     @PostMapping("/measurements")
