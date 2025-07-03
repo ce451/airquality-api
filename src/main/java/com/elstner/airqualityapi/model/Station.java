@@ -1,7 +1,5 @@
 package com.elstner.airqualityapi.model;
 
-import com.elstner.airqualityapi.view.JsonViews;
-import com.fasterxml.jackson.annotation.JsonView;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -11,20 +9,15 @@ import java.util.List;
 public class Station {
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @JsonView(JsonViews.Basic.class)
     private Long id;
 
-    @JsonView(JsonViews.Basic.class)
     private String name;
 
-    @JsonView(JsonViews.Basic.class)
     private String ipAddress;
 
-    @JsonView(JsonViews.Basic.class)
     private StationStatus status;
 
     @OneToMany(mappedBy = "station", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
-    @JsonView(JsonViews.Detailed.class)
     private List<Measurement> measurements = new ArrayList<>();
 
     public Long getId() {
