@@ -17,11 +17,11 @@ public class SetupDatabase {
     @Bean
     CommandLineRunner initDatabase(StationRepository stationRepository, MeasurementRepository measurementRepository) {
         return args -> {
-            var savedStation = stationRepository.save(new Station("Default Station", "127.0.0.1"));
-            measurementRepository.save(new Measurement(savedStation, (short)22.0f, (short)55.3f));
-            // print to console
-            LOGGER.info("Preloaded Station: {}", savedStation);
-            LOGGER.info("Preloaded Measurement: {}", measurementRepository.findAll().get(0));
+//            var savedStation = stationRepository.save(new Station("Default Station", "127.0.0.1"));
+//            measurementRepository.save(new Measurement(savedStation, (short)22.0f, (short)55.3f));
+//            // print to console
+//            LOGGER.info("Preloaded Station: {}", savedStation);
+//            LOGGER.info("Preloaded Measurement: {}", measurementRepository.findAll().get(0));
         };
     }
 }

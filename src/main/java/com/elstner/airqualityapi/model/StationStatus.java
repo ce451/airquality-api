@@ -4,5 +4,6 @@ public enum StationStatus {
     ONLINE,
     OFFLINE,
     ERROR,
-    NEW
+    NEW,
+    MAINTENANCE
 }
