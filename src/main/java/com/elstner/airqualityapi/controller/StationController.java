@@ -2,6 +2,7 @@ package com.elstner.airqualityapi.controller;
 
 import com.elstner.airqualityapi.assembler.StationModelAssembler;
 import com.elstner.airqualityapi.assembler.StationWithMeasurementsModelAssembler;
+import com.elstner.airqualityapi.assembler.StationWithOneMeasurementModelAssembler;
 import com.elstner.airqualityapi.dto.StationWithMeasurementsModel;
 import com.elstner.airqualityapi.model.Station;
 import com.elstner.airqualityapi.model.StationStatus;
@@ -24,17 +25,19 @@ public class StationController {
     private final MeasurementRepository measurementRepository;
 
     private final StationModelAssembler stationModelAssembler;
-
     private final StationWithMeasurementsModelAssembler stationWithMeasurementsModelAssembler;
+    private final StationWithOneMeasurementModelAssembler stationWithOneMeasurementModelAssembler;
 
     public StationController(StationRepository stationRepository,
-                                MeasurementRepository measurementRepository,
+                             MeasurementRepository measurementRepository,
                              StationModelAssembler stationModelAssembler,
-                             StationWithMeasurementsModelAssembler stationWithMeasurementsModelAssembler) {
+                             StationWithMeasurementsModelAssembler stationWithMeasurementsModelAssembler,
+                             StationWithOneMeasurementModelAssembler stationWithOneMeasurementModelAssembler) {
         this.stationRepository = stationRepository;
         this.measurementRepository = measurementRepository;
         this.stationModelAssembler = stationModelAssembler;
         this.stationWithMeasurementsModelAssembler = stationWithMeasurementsModelAssembler;
+        this.stationWithOneMeasurementModelAssembler = stationWithOneMeasurementModelAssembler;
     }
 
     @GetMapping("/stations")
@@ -78,7 +81,7 @@ public class StationController {
     @GetMapping("/stations/latestMeasurement")
     public ResponseEntity<?> latestMeasurement() {
         var stations = stationRepository.findAll().stream()
-                .map(stationWithMeasurementsModelAssembler::toModel)
+                .map(stationWithOneMeasurementModelAssembler::toModel)
                 .collect(Collectors.toList());
 
         return ResponseEntity
