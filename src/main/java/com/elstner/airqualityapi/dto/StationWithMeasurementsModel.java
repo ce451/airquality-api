@@ -4,7 +4,6 @@ import com.elstner.airqualityapi.model.Measurement;
 import com.elstner.airqualityapi.model.Station;
 import com.elstner.airqualityapi.model.StationStatus;
 import org.springframework.hateoas.RepresentationModel;
-import com.elstner.airqualityapi.dto.MeasurementModel;
 
 import java.util.List;
 

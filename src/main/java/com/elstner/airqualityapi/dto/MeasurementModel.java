@@ -7,8 +7,8 @@ import java.util.UUID;
 
 public class MeasurementModel extends RepresentationModel<MeasurementModel> {
     private UUID id;
-    private short temperature;
-    private short humidity;
+    private Float temperature;
+    private Float humidity;
     private LocalDateTime timestamp;
 
     // Getter und Setter
@@ -20,19 +20,19 @@ public class MeasurementModel extends RepresentationModel<MeasurementModel> {
         this.id = id;
     }
 
-    public short getTemperature() {
+    public Float getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(short temperature) {
+    public void setTemperature(Float temperature) {
         this.temperature = temperature;
     }
 
-    public short getHumidity() {
+    public Float getHumidity() {
         return humidity;
     }
 
-    public void setHumidity(short humidity) {
+    public void setHumidity(Float humidity) {
         this.humidity = humidity;
     }
 

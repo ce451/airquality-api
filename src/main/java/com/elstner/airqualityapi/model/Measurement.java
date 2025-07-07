@@ -20,8 +20,8 @@ public class Measurement {
     @JsonIgnore
     private Station station;
 
-    private short temperature;
-    private short humidity;
+    private float temperature;
+    private float humidity;
     private LocalDateTime timestamp = LocalDateTime.now();
 
     public UUID getId() {
@@ -40,19 +40,19 @@ public class Measurement {
         this.station = station;
     }
 
-    public short getTemperature() {
+    public float getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(short temperature) {
+    public void setTemperature(float temperature) {
         this.temperature = temperature;
     }
 
-    public short getHumidity() {
+    public float getHumidity() {
         return humidity;
     }
 
-    public void setHumidity(short humidity) {
+    public void setHumidity(float humidity) {
         this.humidity = humidity;
     }
 
