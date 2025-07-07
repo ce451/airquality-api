@@ -1,6 +1,5 @@
 package com.elstner.airqualityapi.controller;
 
-import com.elstner.airqualityapi.assembler.MeasurementEntityAssembler;
 import com.elstner.airqualityapi.assembler.MeasurementModelAssembler;
 import com.elstner.airqualityapi.model.Measurement;
 import com.elstner.airqualityapi.repository.MeasurementRepository;
@@ -8,7 +7,6 @@ import com.elstner.airqualityapi.service.StationService;
 import com.elstner.airqualityapi.utils.HttpUtils;
 import jakarta.servlet.http.HttpServletRequest;
 import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
 import org.springframework.hateoas.MediaTypes;
 import org.springframework.hateoas.mediatype.problem.Problem;
 import org.springframework.http.HttpHeaders;
@@ -56,7 +54,14 @@ public class MeasurementController {
 
     @PostMapping("/measurements")
     public ResponseEntity<?> create(@RequestBody Measurement measurement, HttpServletRequest request) {
-        measurement.setTimestamp(LocalDateTime.now());
+        if(measurement == null || measurement.getTemperature() == null || measurement.getHumidity() == null) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .header(HttpHeaders.CONTENT_TYPE, MediaTypes.HTTP_PROBLEM_DETAILS_JSON_VALUE)
+                    .body(Problem.create()
+                            .withTitle("Bad Request")
+                            .withDetail("Measurement data is required."));
+        }
 
         String senderIp = HttpUtils.getClientIp(request);
         if (senderIp == null || senderIp.isEmpty()) {
@@ -71,7 +76,9 @@ public class MeasurementController {
         var station = stationService.getOrCreateStation(senderIp);
         measurement.setStation(station);
 
-        measurementRepository.save(measurement);
-        return ResponseEntity.ok(measurementModelAssembler.toModel(measurement));
+        var newMeasurement = new Measurement(station, measurement.getTemperature(), measurement.getHumidity());
+
+        measurementRepository.save(newMeasurement);
+        return ResponseEntity.ok(measurementModelAssembler.toModel(newMeasurement));
     }
 }

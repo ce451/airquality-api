@@ -18,6 +18,7 @@ public class MeasurementModelAssembler implements RepresentationModelAssembler<M
         model.setId(entity.getId());
         model.setTemperature(entity.getTemperature());
         model.setHumidity(entity.getHumidity());
+        model.setAbsoluteHumidity(entity.getAbsoluteHumidity());
         model.setTimestamp(entity.getTimestamp());
         model.add(linkTo(methodOn(MeasurementController.class).one(entity.getId())).withSelfRel());
         return EntityModel.of(model);

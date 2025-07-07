@@ -26,6 +26,7 @@ public class StationWithMeasurementsModelAssembler implements RepresentationMode
                     m.setId(measurement.getId());
                     m.setTemperature(measurement.getTemperature());
                     m.setHumidity(measurement.getHumidity());
+                    m.setAbsoluteHumidity(measurement.getAbsoluteHumidity());
                     m.setTimestamp(measurement.getTimestamp());
                     m.add(linkTo(methodOn(MeasurementController.class).one(measurement.getId())).withSelfRel());
                     return m;

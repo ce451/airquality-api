@@ -9,6 +9,7 @@ public class MeasurementModel extends RepresentationModel<MeasurementModel> {
     private UUID id;
     private Float temperature;
     private Float humidity;
+    private Float absoluteHumidity;
     private LocalDateTime timestamp;
 
     // Getter und Setter
@@ -43,4 +44,8 @@ public class MeasurementModel extends RepresentationModel<MeasurementModel> {
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
+
+    public Float getAbsoluteHumidity() { return absoluteHumidity; }
+
+    public void setAbsoluteHumidity(Float absoluteHumidity) { this.absoluteHumidity = absoluteHumidity; }
 }
