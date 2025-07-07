@@ -1,5 +1,7 @@
 package com.elstner.airqualityapi.dto;
 
+import com.elstner.airqualityapi.model.Measurement;
+import com.elstner.airqualityapi.model.Station;
 import com.elstner.airqualityapi.model.StationStatus;
 import org.springframework.hateoas.RepresentationModel;
 import com.elstner.airqualityapi.dto.MeasurementModel;
@@ -52,5 +54,22 @@ public class StationWithMeasurementsModel extends RepresentationModel<StationWit
 
     public void setMeasurements(List<MeasurementModel> measurements) {
         this.measurements = measurements;
+    }
+
+    public StationWithMeasurementsModel() {}
+
+    public StationWithMeasurementsModel(Station station, List<Measurement> measurements) {
+        this.id = station.getId();
+        this.name = station.getName();
+        this.ipAddress = station.getIpAddress();
+        this.status = station.getStatus();
+        this.measurements = measurements.stream().map(measurement -> {
+            MeasurementModel m = new MeasurementModel();
+            m.setId(measurement.getId());
+            m.setTemperature(measurement.getTemperature());
+            m.setHumidity(measurement.getHumidity());
+            m.setTimestamp(measurement.getTimestamp());
+            return m;
+        }).toList();
     }
 }

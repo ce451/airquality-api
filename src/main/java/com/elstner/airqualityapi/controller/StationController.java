@@ -1,20 +1,18 @@
 package com.elstner.airqualityapi.controller;
 
-import com.elstner.airqualityapi.assembler.StationEntityAssembler;
 import com.elstner.airqualityapi.assembler.StationModelAssembler;
 import com.elstner.airqualityapi.assembler.StationWithMeasurementsModelAssembler;
-import com.elstner.airqualityapi.dto.StationModel;
+import com.elstner.airqualityapi.dto.StationWithMeasurementsModel;
 import com.elstner.airqualityapi.model.Station;
 import com.elstner.airqualityapi.model.StationStatus;
+import com.elstner.airqualityapi.repository.MeasurementRepository;
 import com.elstner.airqualityapi.repository.StationRepository;
-import com.elstner.airqualityapi.service.StationService;
 import org.springframework.hateoas.CollectionModel;
-import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.util.List;
+import java.time.LocalDateTime;
 import java.util.stream.Collectors;
 
 import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
@@ -23,13 +21,18 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 public class StationController {
 
     private final StationRepository stationRepository;
+    private final MeasurementRepository measurementRepository;
+
     private final StationModelAssembler stationModelAssembler;
+
     private final StationWithMeasurementsModelAssembler stationWithMeasurementsModelAssembler;
 
     public StationController(StationRepository stationRepository,
+                                MeasurementRepository measurementRepository,
                              StationModelAssembler stationModelAssembler,
                              StationWithMeasurementsModelAssembler stationWithMeasurementsModelAssembler) {
         this.stationRepository = stationRepository;
+        this.measurementRepository = measurementRepository;
         this.stationModelAssembler = stationModelAssembler;
         this.stationWithMeasurementsModelAssembler = stationWithMeasurementsModelAssembler;
     }
@@ -72,19 +75,37 @@ public class StationController {
                 .body(stationModelAssembler.toModel(station));
     }
 
-    @GetMapping("/stations/lastMeasurements")
-    public ResponseEntity<?> lastMeasurements() {
-        // get all stations associated with one measurement with the latest timestamp
-        long id = 1;
-        var station = stationRepository.findById(id)
-                .orElse(null);
-        if (station == null) {
-            return  null;
-        }
+    @GetMapping("/stations/latestMeasurement")
+    public ResponseEntity<?> latestMeasurement() {
+        var stations = stationRepository.findAll().stream()
+                .map(stationWithMeasurementsModelAssembler::toModel)
+                .collect(Collectors.toList());
 
         return ResponseEntity
                 .ok()
-                .body(stationModelAssembler.toModel(station));
+                .body(stations);
+    }
+
+    @GetMapping("/stations/{id}/measurements")
+    public ResponseEntity<?> getStationWithMeasurements(
+            @PathVariable Long id,
+            @RequestParam(name = "minutes", defaultValue = "60") long minutes) {
+
+        Station station = stationRepository.findById(id)
+                .orElse(null);
+        if (station == null) {
+            return ResponseEntity
+                    .status(HttpStatus.NOT_FOUND)
+                    .header("Content-Type", "application/problem+json")
+                    .body("Station not found with id: " + id);
+        }
+
+        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(minutes);
+
+        var measurements = measurementRepository
+                .findByStationAndTimestampAfterOrderByTimestampDesc(station, cutoff);
+
+        return ResponseEntity.ok(new StationWithMeasurementsModel(station, measurements));
     }
 
     @PostMapping("/stations")

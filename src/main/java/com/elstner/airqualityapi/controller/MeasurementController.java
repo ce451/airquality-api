@@ -54,20 +54,6 @@ public class MeasurementController {
         return ResponseEntity.ok().body(measurementModelAssembler.toModel(measurement));
     }
 
-    @GetMapping("/stations/{stationId}/measurements")
-    public ResponseEntity<?> getMeasurementsByStation(@PathVariable Long stationId) {
-//        var measurements = measurementRepository.findAll().stream()
-//                .filter(measurement -> measurement.getStation().getId().equals(stationId))
-//                .sorted(Comparator.comparing(Measurement::getTimestamp).reversed())
-//                .map(measurementModelAssembler::toModel)
-//                .collect(Collectors.toList());
-//        return CollectionModel.of(measurements, linkTo(MeasurementController.class).withSelfRel());
-
-        return null;
-
-//        return CollectionModel.of(measurements, linkTo(MeasurementController.class).withSelfRel());
-    }
-
     @PostMapping("/measurements")
     public ResponseEntity<?> create(@RequestBody Measurement measurement, HttpServletRequest request) {
         measurement.setTimestamp(LocalDateTime.now());
@@ -88,6 +74,4 @@ public class MeasurementController {
         measurementRepository.save(measurement);
         return ResponseEntity.ok(measurementModelAssembler.toModel(measurement));
     }
-
-
 }

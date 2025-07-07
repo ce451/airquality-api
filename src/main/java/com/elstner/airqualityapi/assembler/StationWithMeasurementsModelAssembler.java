@@ -1,5 +1,6 @@
 package com.elstner.airqualityapi.assembler;
 
+import com.elstner.airqualityapi.controller.MeasurementController;
 import com.elstner.airqualityapi.controller.StationController;
 import com.elstner.airqualityapi.model.*;
 import com.elstner.airqualityapi.dto.*;
@@ -26,6 +27,7 @@ public class StationWithMeasurementsModelAssembler implements RepresentationMode
                     m.setTemperature(measurement.getTemperature());
                     m.setHumidity(measurement.getHumidity());
                     m.setTimestamp(measurement.getTimestamp());
+                    m.add(linkTo(methodOn(MeasurementController.class).one(measurement.getId())).withSelfRel());
                     return m;
                 }).collect(Collectors.toList())
         );
