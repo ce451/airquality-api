@@ -22,7 +22,7 @@ public class Measurement {
 
     private short temperature;
     private short humidity;
-    private LocalDateTime timestamp;
+    private LocalDateTime timestamp = LocalDateTime.now();
 
     public UUID getId() {
         return id;

@@ -1,9 +1,13 @@
 package com.elstner.airqualityapi.controller;
 
 import com.elstner.airqualityapi.assembler.StationEntityAssembler;
+import com.elstner.airqualityapi.assembler.StationModelAssembler;
+import com.elstner.airqualityapi.assembler.StationWithMeasurementsModelAssembler;
+import com.elstner.airqualityapi.dto.StationModel;
 import com.elstner.airqualityapi.model.Station;
 import com.elstner.airqualityapi.model.StationStatus;
 import com.elstner.airqualityapi.repository.StationRepository;
+import com.elstner.airqualityapi.service.StationService;
 import org.springframework.hateoas.CollectionModel;
 import org.springframework.hateoas.EntityModel;
 import org.springframework.http.HttpStatus;
@@ -19,36 +23,40 @@ import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 public class StationController {
 
     private final StationRepository stationRepository;
-    private final StationEntityAssembler stationEntityAssembler;
+    private final StationModelAssembler stationModelAssembler;
+    private final StationWithMeasurementsModelAssembler stationWithMeasurementsModelAssembler;
 
-    public StationController(StationRepository stationRepository, StationEntityAssembler stationEntityAssembler) {
+    public StationController(StationRepository stationRepository,
+                             StationModelAssembler stationModelAssembler,
+                             StationWithMeasurementsModelAssembler stationWithMeasurementsModelAssembler) {
         this.stationRepository = stationRepository;
-        this.stationEntityAssembler = stationEntityAssembler;
+        this.stationModelAssembler = stationModelAssembler;
+        this.stationWithMeasurementsModelAssembler = stationWithMeasurementsModelAssembler;
     }
 
     @GetMapping("/stations")
-    public CollectionModel<EntityModel<Station>> all() {
-        List<EntityModel<Station>> stations = stationRepository.findAll().stream()
-                .map(stationEntityAssembler::toModel)
+    public ResponseEntity<?> all() {
+        var stations = stationRepository.findAll().stream()
+                .map(stationModelAssembler::toModel)
                 .collect(Collectors.toList());
 
-        return CollectionModel.of(stations,
-                linkTo(methodOn(StationController.class).all()).withSelfRel());
+        return ResponseEntity.ok(CollectionModel.of(stations,
+                linkTo(methodOn(StationController.class).all()).withSelfRel()));
     }
 
     @GetMapping("/stations/new")
-    public CollectionModel<EntityModel<Station>> newStations() {
-        List<EntityModel<Station>> stations = stationRepository.findByStatus(StationStatus.NEW).stream()
-                .map(stationEntityAssembler::toModel)
+    public ResponseEntity<?> newStations() {
+        var stations = stationRepository.findByStatus(StationStatus.NEW).stream()
+                .map(stationModelAssembler::toModel)
                 .collect(Collectors.toList());
 
-        return CollectionModel.of(stations,
-                linkTo(methodOn(StationController.class).newStations()).withSelfRel());
+        return ResponseEntity.ok(CollectionModel.of(stations,
+                linkTo(methodOn(StationController.class).newStations()).withSelfRel()));
 
     }
 
     @GetMapping("/stations/{id}")
-    public ResponseEntity<EntityModel<Station>> one(@PathVariable Long id) {
+    public ResponseEntity<?> one(@PathVariable Long id) {
         var station = stationRepository.findById(id)
                 .orElse(null);
 
@@ -61,11 +69,11 @@ public class StationController {
 
         return ResponseEntity
                 .ok()
-                .body(stationEntityAssembler.toModel(station));
+                .body(stationModelAssembler.toModel(station));
     }
 
     @GetMapping("/stations/lastMeasurements")
-    public EntityModel<Station> lastMeasurements() {
+    public ResponseEntity<?> lastMeasurements() {
         // get all stations associated with one measurement with the latest timestamp
         long id = 1;
         var station = stationRepository.findById(id)
@@ -74,19 +82,28 @@ public class StationController {
             return  null;
         }
 
-        return stationEntityAssembler.toModel(station);
+        return ResponseEntity
+                .ok()
+                .body(stationModelAssembler.toModel(station));
     }
 
     @PostMapping("/stations")
-    public ResponseEntity<EntityModel<Station>> createStation(Station station) {
+    public ResponseEntity<?> createStation(@RequestBody Station station) {
+        if (station.getName() == null) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .header("Content-Type", "application/problem+json")
+                    .body("no station provided");
+        }
+
         stationRepository.save(station);
         return ResponseEntity
                 .created(linkTo(methodOn(StationController.class).one(station.getId())).toUri())
-                .body(stationEntityAssembler.toModel(station));
+                .body(stationModelAssembler.toModel(station));
     }
 
     @PutMapping("/stations/{id}")
-    public ResponseEntity<EntityModel<Station>> updateStation(@PathVariable Long id, @RequestBody Station stationUpdate) {
+    public ResponseEntity<?> updateStation(@PathVariable Long id, @RequestBody Station stationUpdate) {
         var updatedStation = stationRepository.findById(id)
                 .map(station -> {
                     station.setName(stationUpdate.getName());
@@ -103,12 +120,12 @@ public class StationController {
 
         return ResponseEntity
                 .ok()
-                .body(stationEntityAssembler.toModel(updatedStation)
+                .body(stationModelAssembler.toModel(updatedStation)
                         .add(linkTo(methodOn(StationController.class).one(updatedStation.getId())).withSelfRel()));
     }
 
     @PatchMapping("/stations/{id}/status")
-    public ResponseEntity<EntityModel<Station>> updateStationStatus(@PathVariable Long id, @RequestParam StationStatus status) {
+    public ResponseEntity<?> updateStationStatus(@PathVariable Long id, @RequestParam StationStatus status) {
         var updatedStation = stationRepository.findById(id)
                 .map(station -> {
                     station.setStatus(status);
@@ -123,7 +140,7 @@ public class StationController {
         }
         return ResponseEntity
                 .ok()
-                .body(stationEntityAssembler.toModel(updatedStation)
+                .body(stationModelAssembler.toModel(updatedStation)
                         .add(linkTo(methodOn(StationController.class).one(updatedStation.getId())).withSelfRel()));
     }
 

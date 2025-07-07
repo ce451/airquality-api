@@ -1,5 +1,6 @@
 package com.elstner.airqualityapi.controller;
 
+import com.elstner.airqualityapi.assembler.MeasurementEntityAssembler;
 import com.elstner.airqualityapi.assembler.MeasurementModelAssembler;
 import com.elstner.airqualityapi.model.Measurement;
 import com.elstner.airqualityapi.repository.MeasurementRepository;
@@ -30,29 +31,31 @@ public class MeasurementController {
 
     private final StationService stationService;
 
-    public MeasurementController(MeasurementRepository measurementRepository, MeasurementModelAssembler measurementModelAssembler, StationService stationService) {
+    public MeasurementController(MeasurementRepository measurementRepository,
+                                    MeasurementModelAssembler measurementModelAssembler,
+                                 StationService stationService) {
         this.measurementRepository = measurementRepository;
         this.measurementModelAssembler = measurementModelAssembler;
         this.stationService = stationService;
     }
 
     @GetMapping("/measurements")
-    public CollectionModel<EntityModel<Measurement>> all() {
+    public ResponseEntity<?> all() {
         var measurements = measurementRepository.findAll().stream()
                     .sorted(Comparator.comparing(Measurement::getTimestamp).reversed())
                     .map(measurementModelAssembler::toModel)
                     .collect(Collectors.toList());
-        return  CollectionModel.of(measurements, linkTo(MeasurementController.class).withSelfRel());
+        return  ResponseEntity.ok().body(CollectionModel.of(measurements, linkTo(MeasurementController.class).withSelfRel()));
     }
 
     @GetMapping("/measurements/{id}")
-    public EntityModel<Measurement> one(@PathVariable UUID id) {
+    public ResponseEntity<?> one(@PathVariable UUID id) {
         var measurement = measurementRepository.findById(id).orElseThrow();
-        return measurementModelAssembler.toModel(measurement);
+        return ResponseEntity.ok().body(measurementModelAssembler.toModel(measurement));
     }
 
     @GetMapping("/stations/{stationId}/measurements")
-    public CollectionModel<EntityModel<Measurement>> getMeasurementsByStation(@PathVariable Long stationId) {
+    public ResponseEntity<?> getMeasurementsByStation(@PathVariable Long stationId) {
 //        var measurements = measurementRepository.findAll().stream()
 //                .filter(measurement -> measurement.getStation().getId().equals(stationId))
 //                .sorted(Comparator.comparing(Measurement::getTimestamp).reversed())
