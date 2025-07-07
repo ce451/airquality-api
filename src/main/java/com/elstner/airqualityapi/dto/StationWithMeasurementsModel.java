@@ -67,6 +67,7 @@ public class StationWithMeasurementsModel extends RepresentationModel<StationWit
             m.setId(measurement.getId());
             m.setTemperature(measurement.getTemperature());
             m.setHumidity(measurement.getHumidity());
+            m.setAbsoluteHumidity(measurement.getAbsoluteHumidity());
             m.setTimestamp(measurement.getTimestamp());
             return m;
         }).toList();
