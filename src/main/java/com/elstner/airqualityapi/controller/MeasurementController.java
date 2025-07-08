@@ -30,7 +30,7 @@ public class MeasurementController {
     private final StationService stationService;
 
     public MeasurementController(MeasurementRepository measurementRepository,
-                                    MeasurementModelAssembler measurementModelAssembler,
+                                 MeasurementModelAssembler measurementModelAssembler,
                                  StationService stationService) {
         this.measurementRepository = measurementRepository;
         this.measurementModelAssembler = measurementModelAssembler;
@@ -40,10 +40,10 @@ public class MeasurementController {
     @GetMapping("/measurements")
     public ResponseEntity<?> all() {
         var measurements = measurementRepository.findAll().stream()
-                    .sorted(Comparator.comparing(Measurement::getTimestamp).reversed())
-                    .map(measurementModelAssembler::toModel)
-                    .collect(Collectors.toList());
-        return  ResponseEntity.ok().body(CollectionModel.of(measurements, linkTo(MeasurementController.class).withSelfRel()));
+                .sorted(Comparator.comparing(Measurement::getTimestamp).reversed())
+                .map(measurementModelAssembler::toModel)
+                .collect(Collectors.toList());
+        return ResponseEntity.ok().body(CollectionModel.of(measurements, linkTo(MeasurementController.class).withSelfRel()));
     }
 
     @GetMapping("/measurements/{id}")
@@ -54,13 +54,23 @@ public class MeasurementController {
 
     @PostMapping("/measurements")
     public ResponseEntity<?> create(@RequestBody Measurement measurement, HttpServletRequest request) {
-        if(measurement == null || measurement.getTemperature() == null || measurement.getHumidity() == null) {
+        if (measurement == null || measurement.getTemperature() == null || measurement.getHumidity() == null) {
             return ResponseEntity
                     .status(HttpStatus.BAD_REQUEST)
                     .header(HttpHeaders.CONTENT_TYPE, MediaTypes.HTTP_PROBLEM_DETAILS_JSON_VALUE)
                     .body(Problem.create()
                             .withTitle("Bad Request")
-                            .withDetail("Measurement data is required."));
+                            .withDetail("No measurement provided."));
+        }
+
+        if (measurement.getTemperature() <= -100 ||
+                measurement.getHumidity() <= 0) {
+            return ResponseEntity
+                    .status(HttpStatus.BAD_REQUEST)
+                    .header(HttpHeaders.CONTENT_TYPE, MediaTypes.HTTP_PROBLEM_DETAILS_JSON_VALUE)
+                    .body(Problem.create()
+                            .withTitle("Bad Request")
+                            .withDetail("Invalid measurement data."));
         }
 
         String senderIp = HttpUtils.getClientIp(request);
