@@ -58,12 +58,23 @@ public class StationController {
 
     @GetMapping("/stations/latestMeasurement")
     public ResponseEntity<?> latestMeasurement() {
+
         var stationsWithLatestMeasurements = stationRepository.findAll().stream()
                 .map(station -> {
                     var latestMeasurement = stationRepository.findLatestMeasurementByStation(station.getId());
                     return stationMapper.toDtoWithMeasurements(station, latestMeasurement);
                 })
+                .sorted((s1, s2) -> {
+                    var m1 = s1.getMeasurements().isEmpty() ? null : s1.getMeasurements().get(0);
+                    var m2 = s2.getMeasurements().isEmpty() ? null : s2.getMeasurements().get(0);
+
+                    if (m1 == null && m2 == null) return 0;
+                    if (m1 == null) return 1;
+                    if (m2 == null) return -1;
+                    return m2.getTimestamp().compareTo(m1.getTimestamp()); // Descending
+                })
                 .toList();
+
         return  ResponseEntity.ok(stationsWithLatestMeasurements);
     }
 
