@@ -5,7 +5,7 @@ import jakarta.persistence.*;
 import org.hibernate.annotations.OnDelete;
 import org.hibernate.annotations.OnDeleteAction;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 @Entity
@@ -23,7 +23,7 @@ public class Measurement {
     private Float temperature;
     private Float humidity;
     private Float absoluteHumidity;
-    private LocalDateTime timestamp = LocalDateTime.now();
+    private ZonedDateTime timestamp = ZonedDateTime.now();
 
     public UUID getId() {
         return id;
@@ -57,11 +57,11 @@ public class Measurement {
         this.humidity = humidity;
     }
 
-    public LocalDateTime getTimestamp() {
+    public ZonedDateTime getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(ZonedDateTime timestamp) {
         this.timestamp = timestamp;
     }
 

@@ -1,6 +1,6 @@
 package com.elstner.airqualityapi.dto;
 
-import java.time.LocalDateTime;
+import java.time.ZonedDateTime;
 import java.util.UUID;
 
 public class MeasurementDto {
@@ -8,7 +8,7 @@ public class MeasurementDto {
     private Double temperature;
     private Double humidity;
     private Double absoluteHumidity;
-    private LocalDateTime timestamp;
+    private ZonedDateTime timestamp;
 
     public UUID getId() {
         return id;
@@ -42,11 +42,11 @@ public class MeasurementDto {
         this.absoluteHumidity = absoluteHumidity;
     }
 
-    public LocalDateTime getTimestamp() {
+    public ZonedDateTime getTimestamp() {
         return timestamp;
     }
 
-    public void setTimestamp(LocalDateTime timestamp) {
+    public void setTimestamp(ZonedDateTime timestamp) {
         this.timestamp = timestamp;
     }
 }
