@@ -1,6 +1,7 @@
 package com.elstner.airqualityapi.controller;
 
-import com.elstner.airqualityapi.dto.StationWithMeasurementsModel;
+//import com.elstner.airqualityapi.dto.StationWithMeasurementsModel;
+import com.elstner.airqualityapi.mapper.StationMapper;
 import com.elstner.airqualityapi.model.Station;
 import com.elstner.airqualityapi.model.StationStatus;
 import com.elstner.airqualityapi.repository.MeasurementRepository;
@@ -10,35 +11,40 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 
 @RestController
 public class StationController {
 
     private final StationRepository stationRepository;
     private final MeasurementRepository measurementRepository;
+    private final StationMapper stationMapper;
 
 
     public StationController(StationRepository stationRepository,
-                             MeasurementRepository measurementRepository) {
+                             MeasurementRepository measurementRepository,
+                             StationMapper stationMapper) {
         this.stationRepository = stationRepository;
         this.measurementRepository = measurementRepository;
+        this.stationMapper = stationMapper;
     }
 
     @GetMapping("/stations")
     public ResponseEntity<?> all() {
-        var stations = stationRepository.findAll();
+        var stations = stationMapper.toStationDtoList(stationRepository.findAll());
         return ResponseEntity.ok(stations);
     }
 
     @GetMapping("/stations/new")
     public ResponseEntity<?> newStations() {
-        var stations = stationRepository.findByStatus(StationStatus.NEW);
+        var stations = stationMapper.toStationDtoList(new ArrayList<>(stationRepository.findByStatus(StationStatus.NEW)));
         return ResponseEntity.ok(stations);
     }
 
     @GetMapping("/stations/{id}")
     public ResponseEntity<?> one(@PathVariable Long id) {
         var station = stationRepository.findById(id)
+                .map(stationMapper::toStationDto)
                 .orElse(null);
         if (station == null) {
             return ResponseEntity
@@ -52,8 +58,13 @@ public class StationController {
 
     @GetMapping("/stations/latestMeasurement")
     public ResponseEntity<?> latestMeasurement() {
-        var stations = stationRepository.findAll();
-        return ResponseEntity.ok(stations);
+        var stationsWithLatestMeasurements = stationRepository.findAll().stream()
+                .map(station -> {
+                    var latestMeasurement = stationRepository.findLatestMeasurementByStation(station.getId());
+                    return stationMapper.toDtoWithMeasurements(station, latestMeasurement);
+                })
+                .toList();
+        return  ResponseEntity.ok(stationsWithLatestMeasurements);
     }
 
     @GetMapping("/stations/{id}/measurements")
@@ -75,7 +86,8 @@ public class StationController {
         var measurements = measurementRepository
                 .findByStationAndTimestampAfterOrderByTimestampDesc(station, cutoff);
 
-        return ResponseEntity.ok(new StationWithMeasurementsModel(station, measurements));
+//        return ResponseEntity.ok(new StationWithMeasurementsModel(station, measurements));
+        return ResponseEntity.ok(stationMapper.toDtoWithMeasurements(station, measurements));
     }
 
     @PostMapping("/stations")

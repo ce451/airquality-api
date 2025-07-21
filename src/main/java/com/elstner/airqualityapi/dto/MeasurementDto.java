@@ -3,14 +3,13 @@ package com.elstner.airqualityapi.dto;
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class MeasurementModel {
+public class MeasurementDto {
     private UUID id;
-    private Float temperature;
-    private Float humidity;
-    private Float absoluteHumidity;
+    private Double temperature;
+    private Double humidity;
+    private Double absoluteHumidity;
     private LocalDateTime timestamp;
 
-    // Getter und Setter
     public UUID getId() {
         return id;
     }
@@ -19,20 +18,28 @@ public class MeasurementModel {
         this.id = id;
     }
 
-    public Float getTemperature() {
+    public Double getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(Float temperature) {
+    public void setTemperature(Double temperature) {
         this.temperature = temperature;
     }
 
-    public Float getHumidity() {
+    public Double getHumidity() {
         return humidity;
     }
 
-    public void setHumidity(Float humidity) {
+    public void setHumidity(Double humidity) {
         this.humidity = humidity;
+    }
+
+    public Double getAbsoluteHumidity() {
+        return absoluteHumidity;
+    }
+
+    public void setAbsoluteHumidity(Double absoluteHumidity) {
+        this.absoluteHumidity = absoluteHumidity;
     }
 
     public LocalDateTime getTimestamp() {
@@ -42,8 +49,4 @@ public class MeasurementModel {
     public void setTimestamp(LocalDateTime timestamp) {
         this.timestamp = timestamp;
     }
-
-    public Float getAbsoluteHumidity() { return absoluteHumidity; }
-
-    public void setAbsoluteHumidity(Float absoluteHumidity) { this.absoluteHumidity = absoluteHumidity; }
 }

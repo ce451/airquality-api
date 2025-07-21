@@ -2,13 +2,15 @@ package com.elstner.airqualityapi.dto;
 
 import com.elstner.airqualityapi.model.StationStatus;
 
-public class StationModel {
+import java.util.List;
+
+public class StationWithMeasurementsDto {
     private Long id;
     private String name;
     private String ipAddress;
     private StationStatus status;
+    private List<MeasurementDto> measurements;
 
-    // Getter und Setter
     public Long getId() {
         return id;
     }
@@ -39,5 +41,13 @@ public class StationModel {
 
     public void setStatus(StationStatus status) {
         this.status = status;
+    }
+
+    public List<MeasurementDto> getMeasurements() {
+        return measurements;
+    }
+
+    public void setMeasurements(List<MeasurementDto> measurements) {
+        this.measurements = measurements;
     }
 }
