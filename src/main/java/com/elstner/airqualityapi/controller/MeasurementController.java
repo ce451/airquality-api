@@ -1,5 +1,6 @@
 package com.elstner.airqualityapi.controller;
 
+import com.elstner.airqualityapi.mapper.MeasurementMapper;
 import com.elstner.airqualityapi.model.Measurement;
 import com.elstner.airqualityapi.repository.MeasurementRepository;
 import com.elstner.airqualityapi.service.StationService;
@@ -19,11 +20,14 @@ import java.util.stream.Collectors;
 public class MeasurementController {
     private final MeasurementRepository measurementRepository;
     private final StationService stationService;
+    private final MeasurementMapper measurementMapper;
 
     public MeasurementController(MeasurementRepository measurementRepository,
-                                 StationService stationService) {
+                                 StationService stationService,
+                                 MeasurementMapper measurementMapper) {
         this.measurementRepository = measurementRepository;
         this.stationService = stationService;
+        this.measurementMapper = measurementMapper;
     }
 
     @GetMapping("/measurements")
@@ -31,13 +35,13 @@ public class MeasurementController {
         var measurements = measurementRepository.findAll().stream()
                 .sorted(Comparator.comparing(Measurement::getTimestamp).reversed())
                 .collect(Collectors.toList());
-        return ResponseEntity.ok(measurements);
+        return ResponseEntity.ok(measurementMapper.toDtoList(measurements));
     }
 
     @GetMapping("/measurements/{id}")
     public ResponseEntity<?> one(@PathVariable UUID id) {
         var measurement = measurementRepository.findById(id).orElseThrow();
-        return ResponseEntity.ok(measurement);
+        return ResponseEntity.ok(measurementMapper.toDto(measurement));
     }
 
     @PostMapping("/measurements")
@@ -68,6 +72,6 @@ public class MeasurementController {
         var newMeasurement = new Measurement(station, measurement.getTemperature(), measurement.getHumidity());
 
         measurementRepository.save(newMeasurement);
-        return ResponseEntity.ok(newMeasurement);
+        return ResponseEntity.ok(measurementMapper.toDto(newMeasurement));
     }
 }
