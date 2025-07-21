@@ -1,11 +1,9 @@
 package com.elstner.airqualityapi.dto;
 
-import org.springframework.hateoas.RepresentationModel;
-
 import java.time.LocalDateTime;
 import java.util.UUID;
 
-public class MeasurementModel extends RepresentationModel<MeasurementModel> {
+public class MeasurementModel {
     private UUID id;
     private Float temperature;
     private Float humidity;

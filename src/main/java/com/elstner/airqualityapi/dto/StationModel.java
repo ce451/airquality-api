@@ -1,9 +1,8 @@
 package com.elstner.airqualityapi.dto;
 
 import com.elstner.airqualityapi.model.StationStatus;
-import org.springframework.hateoas.RepresentationModel;
 
-public class StationModel extends RepresentationModel<StationModel> {
+public class StationModel {
     private Long id;
     private String name;
     private String ipAddress;

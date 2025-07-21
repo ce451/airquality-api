@@ -1,22 +1,15 @@
 package com.elstner.airqualityapi.controller;
 
-import com.elstner.airqualityapi.assembler.StationModelAssembler;
-import com.elstner.airqualityapi.assembler.StationWithMeasurementsModelAssembler;
-import com.elstner.airqualityapi.assembler.StationWithOneMeasurementModelAssembler;
 import com.elstner.airqualityapi.dto.StationWithMeasurementsModel;
 import com.elstner.airqualityapi.model.Station;
 import com.elstner.airqualityapi.model.StationStatus;
 import com.elstner.airqualityapi.repository.MeasurementRepository;
 import com.elstner.airqualityapi.repository.StationRepository;
-import org.springframework.hateoas.CollectionModel;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
-import java.util.stream.Collectors;
-
-import static org.springframework.hateoas.server.mvc.WebMvcLinkBuilder.*;
 
 @RestController
 public class StationController {
@@ -24,48 +17,29 @@ public class StationController {
     private final StationRepository stationRepository;
     private final MeasurementRepository measurementRepository;
 
-    private final StationModelAssembler stationModelAssembler;
-    private final StationWithMeasurementsModelAssembler stationWithMeasurementsModelAssembler;
-    private final StationWithOneMeasurementModelAssembler stationWithOneMeasurementModelAssembler;
 
     public StationController(StationRepository stationRepository,
-                             MeasurementRepository measurementRepository,
-                             StationModelAssembler stationModelAssembler,
-                             StationWithMeasurementsModelAssembler stationWithMeasurementsModelAssembler,
-                             StationWithOneMeasurementModelAssembler stationWithOneMeasurementModelAssembler) {
+                             MeasurementRepository measurementRepository) {
         this.stationRepository = stationRepository;
         this.measurementRepository = measurementRepository;
-        this.stationModelAssembler = stationModelAssembler;
-        this.stationWithMeasurementsModelAssembler = stationWithMeasurementsModelAssembler;
-        this.stationWithOneMeasurementModelAssembler = stationWithOneMeasurementModelAssembler;
     }
 
     @GetMapping("/stations")
     public ResponseEntity<?> all() {
-        var stations = stationRepository.findAll().stream()
-                .map(stationModelAssembler::toModel)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(CollectionModel.of(stations,
-                linkTo(methodOn(StationController.class).all()).withSelfRel()));
+        var stations = stationRepository.findAll();
+        return ResponseEntity.ok(stations);
     }
 
     @GetMapping("/stations/new")
     public ResponseEntity<?> newStations() {
-        var stations = stationRepository.findByStatus(StationStatus.NEW).stream()
-                .map(stationModelAssembler::toModel)
-                .collect(Collectors.toList());
-
-        return ResponseEntity.ok(CollectionModel.of(stations,
-                linkTo(methodOn(StationController.class).newStations()).withSelfRel()));
-
+        var stations = stationRepository.findByStatus(StationStatus.NEW);
+        return ResponseEntity.ok(stations);
     }
 
     @GetMapping("/stations/{id}")
     public ResponseEntity<?> one(@PathVariable Long id) {
         var station = stationRepository.findById(id)
                 .orElse(null);
-
         if (station == null) {
             return ResponseEntity
                     .status(HttpStatus.NOT_FOUND)
@@ -73,20 +47,13 @@ public class StationController {
                     .body(null);
         }
 
-        return ResponseEntity
-                .ok()
-                .body(stationModelAssembler.toModel(station));
+        return ResponseEntity.ok(station);
     }
 
     @GetMapping("/stations/latestMeasurement")
     public ResponseEntity<?> latestMeasurement() {
-        var stations = stationRepository.findAll().stream()
-                .map(stationWithOneMeasurementModelAssembler::toModel)
-                .collect(Collectors.toList());
-
-        return ResponseEntity
-                .ok()
-                .body(stations);
+        var stations = stationRepository.findAll();
+        return ResponseEntity.ok(stations);
     }
 
     @GetMapping("/stations/{id}/measurements")
@@ -122,8 +89,8 @@ public class StationController {
 
         stationRepository.save(station);
         return ResponseEntity
-                .created(linkTo(methodOn(StationController.class).one(station.getId())).toUri())
-                .body(stationModelAssembler.toModel(station));
+                .status(HttpStatus.CREATED)
+                .body(station);
     }
 
     @PutMapping("/stations/{id}")
@@ -142,10 +109,7 @@ public class StationController {
                     .body(null);
         }
 
-        return ResponseEntity
-                .ok()
-                .body(stationModelAssembler.toModel(updatedStation)
-                        .add(linkTo(methodOn(StationController.class).one(updatedStation.getId())).withSelfRel()));
+        return ResponseEntity.ok(updatedStation);
     }
 
     @PatchMapping("/stations/{id}/status")
@@ -162,10 +126,7 @@ public class StationController {
                     .status(HttpStatus.NOT_FOUND)
                     .body(null);
         }
-        return ResponseEntity
-                .ok()
-                .body(stationModelAssembler.toModel(updatedStation)
-                        .add(linkTo(methodOn(StationController.class).one(updatedStation.getId())).withSelfRel()));
+        return ResponseEntity.ok(updatedStation);
     }
 
     @DeleteMapping("/stations/{id}")

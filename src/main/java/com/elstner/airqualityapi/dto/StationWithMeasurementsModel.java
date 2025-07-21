@@ -3,11 +3,10 @@ package com.elstner.airqualityapi.dto;
 import com.elstner.airqualityapi.model.Measurement;
 import com.elstner.airqualityapi.model.Station;
 import com.elstner.airqualityapi.model.StationStatus;
-import org.springframework.hateoas.RepresentationModel;
 
 import java.util.List;
 
-public class StationWithMeasurementsModel extends RepresentationModel<StationWithMeasurementsModel> {
+public class StationWithMeasurementsModel {
     private Long id;
     private String name;
     private String ipAddress;
