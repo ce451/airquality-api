@@ -5,9 +5,9 @@ import java.util.UUID;
 
 public class MeasurementDto {
     private UUID id;
-    private Double temperature;
-    private Double humidity;
-    private Double absoluteHumidity;
+    private Float temperature;
+    private Float humidity;
+    private Float absoluteHumidity;
     private ZonedDateTime timestamp;
 
     public UUID getId() {
@@ -18,27 +18,27 @@ public class MeasurementDto {
         this.id = id;
     }
 
-    public Double getTemperature() {
+    public Float getTemperature() {
         return temperature;
     }
 
-    public void setTemperature(Double temperature) {
+    public void setTemperature(Float temperature) {
         this.temperature = temperature;
     }
 
-    public Double getHumidity() {
+    public Float getHumidity() {
         return humidity;
     }
 
-    public void setHumidity(Double humidity) {
+    public void setHumidity(Float humidity) {
         this.humidity = humidity;
     }
 
-    public Double getAbsoluteHumidity() {
+    public Float getAbsoluteHumidity() {
         return absoluteHumidity;
     }
 
-    public void setAbsoluteHumidity(Double absoluteHumidity) {
+    public void setAbsoluteHumidity(Float absoluteHumidity) {
         this.absoluteHumidity = absoluteHumidity;
     }
 
