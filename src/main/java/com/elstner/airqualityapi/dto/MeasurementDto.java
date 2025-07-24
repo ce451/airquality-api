@@ -8,6 +8,7 @@ public class MeasurementDto {
     private Float temperature;
     private Float humidity;
     private Float absoluteHumidity;
+    private Float voltage;
     private ZonedDateTime timestamp;
 
     public UUID getId() {
@@ -41,6 +42,10 @@ public class MeasurementDto {
     public void setAbsoluteHumidity(Float absoluteHumidity) {
         this.absoluteHumidity = absoluteHumidity;
     }
+
+    public Float getVoltage() { return voltage; }
+
+    public void setVoltage(Float voltage) { this.voltage = voltage; }
 
     public ZonedDateTime getTimestamp() {
         return timestamp;

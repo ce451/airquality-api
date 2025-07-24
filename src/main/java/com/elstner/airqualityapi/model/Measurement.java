@@ -23,6 +23,7 @@ public class Measurement {
     private Float temperature;
     private Float humidity;
     private Float absoluteHumidity;
+    private Float voltage;
     private ZonedDateTime timestamp = ZonedDateTime.now();
 
     public UUID getId() {
@@ -73,12 +74,17 @@ public class Measurement {
         this.absoluteHumidity = absoluteHumidity;
     }
 
+    public Float getVoltage() { return voltage; }
+
+    public void setVoltage(Float voltage) { this.voltage = voltage; }
+
     public Measurement() {}
 
-    public Measurement(Station station, Float temperature, Float humidity) {
+    public Measurement(Station station, Float temperature, Float humidity, Float voltage) {
         this.station = station;
         this.temperature = temperature;
         this.humidity = humidity;
+        this.voltage = voltage;
 
         // Calculate absolute humidity using the formula:
         // AH = 6.112 * e^((17.67 * T) / (T + 243.5)) * (RH / 100)

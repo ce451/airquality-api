@@ -69,9 +69,10 @@ public class MeasurementController {
         var station = stationService.getOrCreateStation(senderIp);
         measurement.setStation(station);
 
-        var newMeasurement = new Measurement(station, measurement.getTemperature(), measurement.getHumidity());
+        var newMeasurement = new Measurement(station, measurement.getTemperature(), measurement.getHumidity(), measurement.getVoltage());
 
         measurementRepository.save(newMeasurement);
+        var ret = measurementMapper.toDto(newMeasurement);
         return ResponseEntity.ok(measurementMapper.toDto(newMeasurement));
     }
 }
