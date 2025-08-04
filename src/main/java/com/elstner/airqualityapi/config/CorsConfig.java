@@ -14,6 +14,7 @@ public class CorsConfig
             @Override
             public void addCorsMappings(org.springframework.web.servlet.config.annotation.CorsRegistry registry) {
                 registry.addMapping("/**")
+                        .allowedOrigins("*")
                         .allowedOrigins("http://localhost:4200")
                         .allowedOrigins("http://localhost:8082")
                         .allowedOrigins("http://s03:8081")
