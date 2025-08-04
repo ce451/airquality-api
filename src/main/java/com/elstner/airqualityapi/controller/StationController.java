@@ -120,9 +120,13 @@ public class StationController {
     public ResponseEntity<?> updateStation(@PathVariable Long id, @RequestBody Station stationUpdate) {
         var updatedStation = stationRepository.findById(id)
                 .map(station -> {
-                    station.setName(stationUpdate.getName());
-                    station.setIpAddress(stationUpdate.getIpAddress());
-                    station.setStatus(stationUpdate.getStatus());
+                    // change properties, if provided by RequestBody
+                    if (stationUpdate.getName() != null) station.setName(stationUpdate.getName());
+                    if (stationUpdate.getIpAddress() != null) station.setIpAddress(stationUpdate.getIpAddress());
+                    if (stationUpdate.getStatus() != null) station.setStatus(stationUpdate.getStatus());
+                    if (stationUpdate.getRoomGroup()!= null) station.setRoomGroup(stationUpdate.getRoomGroup());
+                    if (stationUpdate.getDisplayOrder() != null) station.setDisplayOrder(stationUpdate.getDisplayOrder());
+
                     return stationRepository.save(station);
                 }).orElse(null);
 

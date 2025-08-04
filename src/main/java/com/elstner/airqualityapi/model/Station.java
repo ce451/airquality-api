@@ -17,6 +17,12 @@ public class Station {
 
     private StationStatus status;
 
+    private String roomGroup;
+
+    private Integer roomGroupOrder;
+
+    private Integer displayOrder;
+
     @OneToMany(mappedBy = "station", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Measurement> measurements = new ArrayList<>();
 
@@ -51,6 +57,18 @@ public class Station {
     public void setStatus(StationStatus status) {
         this.status = status;
     }
+
+    public String getRoomGroup() { return roomGroup; }
+
+    public void setRoomGroup(String group) { this.roomGroup = group; }
+
+    public Integer getRoomGroupOrder() { return roomGroupOrder; }
+
+    public void setRoomGroupOrder(Integer roolGroupOrder) { this.roomGroupOrder = roolGroupOrder; }
+
+    public Integer getDisplayOrder() { return displayOrder; }
+
+    public void setDisplayOrder(Integer order) { this.displayOrder = order; }
 
     public List<Measurement> getMeasurements() {
         return measurements;

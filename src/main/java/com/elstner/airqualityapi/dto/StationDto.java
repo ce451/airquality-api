@@ -2,13 +2,14 @@ package com.elstner.airqualityapi.dto;
 
 import com.elstner.airqualityapi.model.StationStatus;
 
-import java.util.List;
-
 public class StationDto {
     private Long id;
     private String name;
     private String ipAddress;
     private StationStatus status;
+    private String roomGroup;
+    private Integer roomGroupOrder;
+    private Integer displayOrder;
 
     public Long getId() {
         return id;
@@ -41,4 +42,16 @@ public class StationDto {
     public void setStatus(StationStatus status) {
         this.status = status;
     }
+
+    public String getRoomGroup() { return roomGroup; }
+
+    public void setRoomGroup(String roomGroup) { this.roomGroup = roomGroup; }
+
+    public Integer getRoomGroupOrder() { return roomGroupOrder; }
+
+    public void setRoomGroupOrder(Integer roomGroupOrder) { this.roomGroupOrder = roomGroupOrder; }
+
+    public Integer getDisplayOrder() { return displayOrder; }
+
+    public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
 }
