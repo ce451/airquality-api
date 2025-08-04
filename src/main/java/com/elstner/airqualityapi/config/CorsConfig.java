@@ -15,10 +15,6 @@ public class CorsConfig
             public void addCorsMappings(org.springframework.web.servlet.config.annotation.CorsRegistry registry) {
                 registry.addMapping("/**")
                         .allowedOrigins("*")
-                        .allowedOrigins("http://localhost:4200")
-                        .allowedOrigins("http://localhost:8082")
-                        .allowedOrigins("http://s03:8081")
-                        .allowedOrigins("http://s03.ruffe-vega.ts.net:8081/")
                         .allowedMethods("GET", "POST", "PUT", "DELETE", "OPTIONS")
                         .allowedHeaders("*")
                         .allowCredentials(true);
