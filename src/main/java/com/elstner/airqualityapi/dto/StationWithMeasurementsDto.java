@@ -9,6 +9,9 @@ public class StationWithMeasurementsDto {
     private String name;
     private String ipAddress;
     private StationStatus status;
+    private String roomGroup;
+    private Integer roomGroupOrder;
+    private Integer displayOrder;
     private List<MeasurementDto> measurements;
 
     public Long getId() {
@@ -42,6 +45,18 @@ public class StationWithMeasurementsDto {
     public void setStatus(StationStatus status) {
         this.status = status;
     }
+
+    public String getRoomGroup() { return roomGroup; }
+
+    public void setRoomGroup(String roomGroup) { this.roomGroup = roomGroup; }
+
+    public Integer getRoomGroupOrder() { return roomGroupOrder; }
+
+    public void setRoomGroupOrder(Integer roomGroupOrder) { this.roomGroupOrder = roomGroupOrder; }
+
+    public Integer getDisplayOrder() { return displayOrder; }
+
+    public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
 
     public List<MeasurementDto> getMeasurements() {
         return measurements;
