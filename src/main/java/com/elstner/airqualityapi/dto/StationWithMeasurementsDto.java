@@ -9,8 +9,7 @@ public class StationWithMeasurementsDto {
     private String name;
     private String ipAddress;
     private StationStatus status;
-    private String roomGroup;
-    private Integer roomGroupOrder;
+    private Long stationGroupId;
     private Integer displayOrder;
     private List<MeasurementDto> measurements;
 
@@ -46,13 +45,9 @@ public class StationWithMeasurementsDto {
         this.status = status;
     }
 
-    public String getRoomGroup() { return roomGroup; }
+    public Long getStationGroupId() { return stationGroupId; }
 
-    public void setRoomGroup(String roomGroup) { this.roomGroup = roomGroup; }
-
-    public Integer getRoomGroupOrder() { return roomGroupOrder; }
-
-    public void setRoomGroupOrder(Integer roomGroupOrder) { this.roomGroupOrder = roomGroupOrder; }
+    public void setStationGroupId(Long stationGroupId) { this.stationGroupId = stationGroupId; }
 
     public Integer getDisplayOrder() { return displayOrder; }
 

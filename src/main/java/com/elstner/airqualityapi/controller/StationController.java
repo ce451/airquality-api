@@ -1,6 +1,5 @@
 package com.elstner.airqualityapi.controller;
 
-//import com.elstner.airqualityapi.dto.StationWithMeasurementsModel;
 import com.elstner.airqualityapi.mapper.StationMapper;
 import com.elstner.airqualityapi.model.Station;
 import com.elstner.airqualityapi.model.StationStatus;
@@ -124,7 +123,7 @@ public class StationController {
                     if (stationUpdate.getName() != null) station.setName(stationUpdate.getName());
                     if (stationUpdate.getIpAddress() != null) station.setIpAddress(stationUpdate.getIpAddress());
                     if (stationUpdate.getStatus() != null) station.setStatus(stationUpdate.getStatus());
-                    if (stationUpdate.getRoomGroup()!= null) station.setRoomGroup(stationUpdate.getRoomGroup());
+                    if (stationUpdate.getStationGroupId()!= null) station.setStationGroupId(stationUpdate.getStationGroupId());
                     if (stationUpdate.getDisplayOrder() != null) station.setDisplayOrder(stationUpdate.getDisplayOrder());
 
                     return stationRepository.save(station);

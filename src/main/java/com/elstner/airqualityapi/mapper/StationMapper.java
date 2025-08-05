@@ -15,8 +15,8 @@ public interface StationMapper {
     StationDto toStationDto(Station station);
     List<StationDto> toStationDtoList(List<Station> stations);
 
-    MeasurementDto toMeasurementDto(Measurement measurement);
-    List<MeasurementDto> toMeasurementDtoList(List<Measurement> measurements);
+//    MeasurementDto toMeasurementDto(Measurement measurement);
+//    List<MeasurementDto> toMeasurementDtoList(List<Measurement> measurements);
 
     @Mapping(target = "measurements", source = "measurements")
     StationWithMeasurementsDto toDtoWithMeasurements(Station station, List<Measurement> measurements);
