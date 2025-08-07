@@ -10,6 +10,8 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.time.LocalDateTime;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
 import java.util.ArrayList;
 
 @RestController
@@ -91,7 +93,8 @@ public class StationController {
                     .body("Station not found with id: " + id);
         }
 
-        LocalDateTime cutoff = LocalDateTime.now().minusMinutes(minutes);
+        LocalDateTime localCutoff = LocalDateTime.now().minusMinutes(minutes);
+        ZonedDateTime cutoff = localCutoff.atZone(ZoneId.systemDefault());
 
         var measurements = measurementRepository
                 .findByStationAndTimestampAfterOrderByTimestampDesc(station, cutoff);
