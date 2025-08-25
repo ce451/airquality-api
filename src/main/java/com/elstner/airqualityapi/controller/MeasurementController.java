@@ -1,8 +1,10 @@
 package com.elstner.airqualityapi.controller;
 
+import com.elstner.airqualityapi.dto.MeasurementWithStationDto;
 import com.elstner.airqualityapi.mapper.MeasurementMapper;
 import com.elstner.airqualityapi.model.Measurement;
 import com.elstner.airqualityapi.repository.MeasurementRepository;
+import com.elstner.airqualityapi.service.MeasurementPublisher;
 import com.elstner.airqualityapi.service.StationService;
 import com.elstner.airqualityapi.utils.HttpUtils;
 import jakarta.servlet.http.HttpServletRequest;
@@ -21,13 +23,16 @@ public class MeasurementController {
     private final MeasurementRepository measurementRepository;
     private final StationService stationService;
     private final MeasurementMapper measurementMapper;
+    private final MeasurementPublisher measurementPublisher;
 
     public MeasurementController(MeasurementRepository measurementRepository,
                                  StationService stationService,
-                                 MeasurementMapper measurementMapper) {
+                                 MeasurementMapper measurementMapper,
+                                 MeasurementPublisher measurementPublisher) {
         this.measurementRepository = measurementRepository;
         this.stationService = stationService;
         this.measurementMapper = measurementMapper;
+        this.measurementPublisher = measurementPublisher;
     }
 
     @GetMapping("/measurements")
@@ -73,6 +78,17 @@ public class MeasurementController {
 
         measurementRepository.save(newMeasurement);
         var ret = measurementMapper.toDto(newMeasurement);
+
+        MeasurementWithStationDto webSocketUpdate = new MeasurementWithStationDto();
+        webSocketUpdate.setId(newMeasurement.getId());
+        webSocketUpdate.setStationId(station.getId());
+        webSocketUpdate.setTemperature(newMeasurement.getTemperature());
+        webSocketUpdate.setHumidity(newMeasurement.getHumidity());
+        webSocketUpdate.setAbsoluteHumidity(newMeasurement.getAbsoluteHumidity());
+        webSocketUpdate.setVoltage(newMeasurement.getVoltage());
+        webSocketUpdate.setTimestamp(newMeasurement.getTimestamp());
+        measurementPublisher.publishMeasurementUpdate(webSocketUpdate);
+
         return ResponseEntity.ok(measurementMapper.toDto(newMeasurement));
     }
 }
