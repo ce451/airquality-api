@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Spring Boot REST API for collecting and managing air quality measurements from IoT weather stations. The API automatically registers new stations by IP address, stores temperature/humidity/voltage data in PostgreSQL, and publishes real-time updates via WebSocket.
 
-**Version:** 0.5.1 (managed in `application.properties`)
+**Version:** 0.6.0 (managed in `application.properties`)
 
 ## Technology Stack
 
@@ -117,6 +117,12 @@ Flyway migrations in `src/main/resources/db/migration/`
 - The live DB's history is baselined (V1) through V9, so new migrations start at **V10**. **Do not edit already-applied migration files** (Flyway checksum validation) — only add new `V{n}__*.sql`.
 
 **Important:** `spring.jpa.hibernate.ddl-auto=validate` in production - schema changes MUST use Flyway migrations.
+
+### Testing
+
+- Default tests run on **H2** (`src/test/resources/application.properties`, Flyway off, `ddl-auto=none`).
+- `MeasurementThinningServiceTest` (Mockito) — covers the thinning service's cascade and band-boundary logic (3 contiguous bands, resolution 30/60/300s, exception resilience). Pure unit test, no DB.
+- `MeasurementRepositoryThinningTest` — a `@DataJpaTest` slice test that runs the native `thinBucket` `DELETE` against a **real Postgres 15 via Testcontainers** (H2 can't faithfully run the windowed `extract(epoch …)` / `ROW_NUMBER()` query). Builds the schema with `ddl-auto=create-drop` (there is no `V1` file to migrate from scratch) and `hibernate.timezone.default_storage=NORMALIZE_UTC` to mirror prod's UTC-naive column. Guarded with `@Testcontainers(disabledWithoutDocker = true)`: it **skips** (never fails the build) when Docker is unavailable, and runs in CI (`ubuntu-latest` has Docker). Caveat: against very new local Docker daemons (API ≥ 1.40) the bundled docker-java may fail to negotiate and skip locally — the query logic is then verified directly with `docker run postgres:15`.
 
 ## Configuration
 
