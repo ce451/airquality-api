@@ -71,15 +71,27 @@ public class MeasurementThinningService {
         ZonedDateTime tier3Edge = now.minusMinutes(tier3AfterMinutes);  // 1 day ago
         ZonedDateTime retentionFloor = now.minusDays(retentionDays);    // 30 days ago
 
-        try {
-            int t1 = measurementRepository.thinBucket(tier1IntervalSeconds, tier2Edge, tier1Edge);      // [1h, 10min) -> 30s
-            int t2 = measurementRepository.thinBucket(tier2IntervalSeconds, tier3Edge, tier2Edge);      // [1d, 1h)    -> 60s
-            int t3 = measurementRepository.thinBucket(tier3IntervalSeconds, retentionFloor, tier3Edge); // [retention, 1d) -> 300s
+        // Each band is thinned independently: a failure in one (e.g. a lock-wait on the
+        // heavy first run) must not skip the others for this cycle.
+        int t1 = thinBand(tier1IntervalSeconds, tier2Edge, tier1Edge);      // [1h, 10min) -> 30s
+        int t2 = thinBand(tier2IntervalSeconds, tier3Edge, tier2Edge);      // [1d, 1h)    -> 60s
+        int t3 = thinBand(tier3IntervalSeconds, retentionFloor, tier3Edge); // [retention, 1d) -> 300s
 
-            log.info("Thinning done: removed {} ({}s band), {} ({}s band), {} ({}s band); {} total",
-                    t1, tier1IntervalSeconds, t2, tier2IntervalSeconds, t3, tier3IntervalSeconds, t1 + t2 + t3);
+        log.info("Thinning done: removed {} ({}s band), {} ({}s band), {} ({}s band); {} total",
+                t1, tier1IntervalSeconds, t2, tier2IntervalSeconds, t3, tier3IntervalSeconds, t1 + t2 + t3);
+    }
+
+    /**
+     * Thins a single band, isolating failures so one band cannot abort the others.
+     *
+     * @return the number of deleted measurements, or 0 if the band failed.
+     */
+    private int thinBand(long intervalSeconds, ZonedDateTime start, ZonedDateTime end) {
+        try {
+            return measurementRepository.thinBucket(intervalSeconds, start, end);
         } catch (Exception e) {
-            log.error("Error during measurement thinning", e);
+            log.error("Error thinning {}s band [{}, {})", intervalSeconds, start, end, e);
+            return 0;
         }
     }
 }
