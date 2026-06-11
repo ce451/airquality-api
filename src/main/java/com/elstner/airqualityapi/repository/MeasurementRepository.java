@@ -21,4 +21,40 @@ public interface MeasurementRepository extends JpaRepository<Measurement, UUID> 
     @Query("DELETE FROM Measurement m WHERE m.timestamp < :cutoffDate")
     int deleteByTimestampBefore(@Param("cutoffDate") ZonedDateTime cutoffDate);
 
+    /**
+     * Thins out (decimates) measurements in the time band [start, end) by keeping only
+     * the earliest measurement per (station, time-bucket) and deleting the rest.
+     * The bucket size is {@code intervalSeconds}, aligned to the Unix epoch.
+     * <p>
+     * Idempotent: after a run each bucket holds a single row, so re-running over the
+     * same band deletes nothing. {@code "timestamp"} is quoted because it is a Postgres
+     * keyword.
+     *
+     * @param intervalSeconds target resolution in seconds (e.g. 30, 60, 300)
+     * @param start           inclusive lower bound (older edge) of the band
+     * @param end             exclusive upper bound (younger edge) of the band
+     * @return number of deleted measurements
+     */
+    @Modifying
+    @Transactional
+    @Query(value = """
+            DELETE FROM measurement
+            WHERE id IN (
+                SELECT id FROM (
+                    SELECT id,
+                           ROW_NUMBER() OVER (
+                               PARTITION BY station_id,
+                                            floor(extract(epoch from "timestamp") / :intervalSeconds)
+                               ORDER BY "timestamp"
+                           ) AS rn
+                    FROM measurement
+                    WHERE "timestamp" >= :start AND "timestamp" < :end
+                ) ranked
+                WHERE ranked.rn > 1
+            )
+            """, nativeQuery = true)
+    int thinBucket(@Param("intervalSeconds") long intervalSeconds,
+                   @Param("start") ZonedDateTime start,
+                   @Param("end") ZonedDateTime end);
+
 }
