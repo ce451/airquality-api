@@ -59,7 +59,7 @@ The Docker setup includes:
 - UUID primary key
 - Stores temperature, humidity, voltage
 - Auto-calculates absolute humidity on creation (constructor logic)
-- Timestamp defaults to ZonedDateTime.now() with Europe/Vienna timezone
+- Timestamp defaults to `ZonedDateTime.now()`; stored **UTC-naive** (`timestamp without time zone`), serialized to clients as `Europe/Vienna` via Jackson
 
 **StationGroup** - Logical grouping of stations (e.g., rooms in a building)
 - Display name and ordering for UI presentation
@@ -76,10 +76,13 @@ The Docker setup includes:
 **Services** (`service/`)
 - `StationServiceImpl` - Handles auto-registration: `getOrCreateStation(ipAddress)`
 - `MeasurementPublisher` - Publishes new measurements to WebSocket topic `/topic/measurements`
+- `MeasurementCleanupService` - `@Scheduled` daily 02:00; deletes measurements older than `measurement.retention.days` (30)
+- `MeasurementThinningService` - `@Scheduled` every 5 min; cascaded downsampling of old measurements (see "Scheduled Data Lifecycle")
 
 **Repositories** (`repository/`) - Spring Data JPA repositories
 - Custom queries like `findByStationAndTimestampAfterOrderByTimestampDesc`
 - `findLatestMeasurementByStation` for most recent reading
+- `deleteByTimestampBefore` (retention cleanup) and `thinBucket(intervalSeconds, start, end)` — a native windowed `DELETE` that keeps one row per `(station, time-bucket)` for downsampling
 
 **Mappers** (`mapper/`) - MapStruct interfaces for entity ↔ DTO conversion
 - Configured with `componentModel = "spring"` for dependency injection
@@ -97,11 +100,21 @@ The Docker setup includes:
 4. Measurement saved to database (absolute humidity calculated in constructor)
 5. `MeasurementPublisher` broadcasts update to WebSocket subscribers at `/topic/measurements`
 
+### Scheduled Data Lifecycle
+
+`@EnableScheduling` is active on `AirQualityApiApplication`. Two scheduled tasks keep measurement volume in check (sensors POST every ~15s since the 2026-06-08 SHT3x changeover, so the table grows fast):
+
+- **Cleanup** (`MeasurementCleanupService`, daily 02:00, cron `measurement.cleanup.cron`): hard-deletes measurements older than `measurement.retention.days` (default 30).
+- **Thinning / downsampling** (`MeasurementThinningService`, every 5 min, cron `measurement.thinning.cron`): progressively decimates older data — keeps one measurement per `(station, time-bucket)` and deletes the rest. Cascade (configurable via `measurement.thinning.tierN.{after-minutes,interval-seconds}`): >10 min → 30s, >1 h → 60s, >1 day → 300s. The last 10 minutes are untouched. Idempotent (re-running a band deletes nothing). The **first** production run is a large one-off delete (~90% of rows) — take a `pg_dump` backup first and run `VACUUM (ANALYZE) measurement` afterward.
+
+**Timestamp storage gotcha:** the `measurement.timestamp` column is `timestamp without time zone` storing **UTC-naive** values; the deployed API container runs in **UTC**, so `ZonedDateTime.now()` aligns with stored values. Time-window queries depend on this — compute boundaries in `ZonedDateTime`/SQL `now()` (UTC), not local wall-clock.
+
 ### Database Migrations
 
 Flyway migrations in `src/main/resources/db/migration/`
-- Currently on V9 (refactored station groups)
-- Notable migrations: V4 added absolute humidity, V5 added voltage, V8-V9 refactored grouping
+- Currently on **V10** (indexes on `measurement(station_id, timestamp)` and `(timestamp)` — before V10 the only index was the PK on `id`)
+- Notable migrations: V4 added absolute humidity, V5 added voltage, V8-V9 refactored grouping, V10 added measurement indexes
+- The live DB's history is baselined (V1) through V9, so new migrations start at **V10**. **Do not edit already-applied migration files** (Flyway checksum validation) — only add new `V{n}__*.sql`.
 
 **Important:** `spring.jpa.hibernate.ddl-auto=validate` in production - schema changes MUST use Flyway migrations.
 
@@ -117,9 +130,9 @@ Docker: Points to `db` service container
 - CORS: Allows all origins (`setAllowedOriginPatterns("*")`)
 
 ### Important Settings
-- Timezone: `Europe/Vienna` (Jackson configuration)
+- Timezone: `Europe/Vienna` for Jackson **serialization** only; measurements are **stored UTC-naive** and the container runs UTC (see "Timestamp storage gotcha")
 - JPA: `show-sql=true` for debugging
-- Flyway: Currently commented out in `application.properties` but migrations exist
+- Flyway: **enabled** in `application.properties` (`spring.flyway.enabled=true`, `locations=classpath:db/migration`); history baselined through V9
 
 ## Code Patterns
 
