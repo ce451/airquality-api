@@ -71,7 +71,8 @@ public class MeasurementController {
                     .body("The provided IP address is invalid or not recognized.");
         }
 
-        var station = stationService.getOrCreateStation(senderIp);
+        String mac = request.getHeader("X-Station-Mac");
+        var station = stationService.getOrCreateStation(mac, senderIp);
         measurement.setStation(station);
 
         var newMeasurement = new Measurement(station, measurement.getTemperature(), measurement.getHumidity(), measurement.getVoltage());

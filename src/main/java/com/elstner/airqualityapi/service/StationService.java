@@ -4,5 +4,5 @@ import com.elstner.airqualityapi.model.Station;
 
 public interface StationService {
 
-    Station getOrCreateStation(String ipAddress);
+    Station getOrCreateStation(String macAddress, String ipAddress);
 }

@@ -6,6 +6,7 @@ public class StationDto {
     private Long id;
     private String name;
     private String ipAddress;
+    private String macAddress;
     private StationStatus status;
     private Long stationGroupId;
     private Integer displayOrder;
@@ -32,6 +33,14 @@ public class StationDto {
 
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
+    }
+
+    public String getMacAddress() {
+        return macAddress;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
     }
 
     public StationStatus getStatus() {

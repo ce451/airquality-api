@@ -15,6 +15,11 @@ public class Station {
 
     private String ipAddress;
 
+    @Column(name = "mac_address", length = 17)
+    private String macAddress;
+
+    @Enumerated(EnumType.STRING)
+    @Column(length = 20)
     private StationStatus status;
 
     private Long stationGroupId;
@@ -46,6 +51,14 @@ public class Station {
 
     public void setIpAddress(String ipAddress) {
         this.ipAddress = ipAddress;
+    }
+
+    public String getMacAddress() {
+        return macAddress;
+    }
+
+    public void setMacAddress(String macAddress) {
+        this.macAddress = macAddress;
     }
 
     public StationStatus getStatus() {

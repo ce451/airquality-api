@@ -12,6 +12,7 @@ import java.util.Optional;
 
 public interface StationRepository extends JpaRepository<Station, Long> {
     Optional<Station> findByIpAddress(String ipAddress);
+    Optional<Station> findByMacAddress(String macAddress);
     Collection<Station> findByStatus(StationStatus status);
     @Query("""
             SELECT m FROM Measurement m
