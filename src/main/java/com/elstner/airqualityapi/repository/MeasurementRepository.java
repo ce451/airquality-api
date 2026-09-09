@@ -2,6 +2,7 @@ package com.elstner.airqualityapi.repository;
 
 import com.elstner.airqualityapi.model.Measurement;
 import com.elstner.airqualityapi.model.Station;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
@@ -15,6 +16,20 @@ import java.util.UUID;
 
 public interface MeasurementRepository extends JpaRepository<Measurement, UUID> {
     List<Measurement> findByStationAndTimestampAfterOrderByTimestampDesc(Station station, ZonedDateTime timestamp);
+
+    List<Measurement> findAllByOrderByTimestampDesc(Pageable pageable);
+
+    /**
+     * Newest measurement of every station in a single query (Postgres
+     * {@code DISTINCT ON}), backed by idx_measurement_station_timestamp.
+     * Replaces the previous one-query-per-station loop.
+     */
+    @Query(value = """
+            SELECT DISTINCT ON (station_id) *
+            FROM measurement
+            ORDER BY station_id, "timestamp" DESC
+            """, nativeQuery = true)
+    List<Measurement> findLatestPerStation();
 
     @Modifying
     @Transactional

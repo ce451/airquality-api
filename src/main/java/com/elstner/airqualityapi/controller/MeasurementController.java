@@ -8,15 +8,13 @@ import com.elstner.airqualityapi.service.MeasurementPublisher;
 import com.elstner.airqualityapi.service.StationService;
 import com.elstner.airqualityapi.utils.HttpUtils;
 import jakarta.servlet.http.HttpServletRequest;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
-import java.time.LocalDateTime;
-import java.util.Comparator;
 import java.util.UUID;
-import java.util.stream.Collectors;
 
 @RestController
 public class MeasurementController {
@@ -35,11 +33,11 @@ public class MeasurementController {
         this.measurementPublisher = measurementPublisher;
     }
 
+    /** Newest-first dump, capped: this used to load and sort the whole table in memory. */
     @GetMapping("/measurements")
-    public ResponseEntity<?> all() {
-        var measurements = measurementRepository.findAll().stream()
-                .sorted(Comparator.comparing(Measurement::getTimestamp).reversed())
-                .collect(Collectors.toList());
+    public ResponseEntity<?> all(@RequestParam(name = "limit", defaultValue = "1000") int limit) {
+        int cappedLimit = Math.clamp(limit, 1, 10_000);
+        var measurements = measurementRepository.findAllByOrderByTimestampDesc(PageRequest.of(0, cappedLimit));
         return ResponseEntity.ok(measurementMapper.toDtoList(measurements));
     }
 

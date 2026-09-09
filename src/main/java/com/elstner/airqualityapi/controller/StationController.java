@@ -14,6 +14,8 @@ import java.time.LocalDateTime;
 import java.time.ZoneId;
 import java.time.ZonedDateTime;
 import java.util.ArrayList;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 public class StationController {
@@ -61,10 +63,14 @@ public class StationController {
     @GetMapping("/stations/latestMeasurement")
     public ResponseEntity<?> latestMeasurement() {
 
+        var latestByStationId = measurementRepository.findLatestPerStation().stream()
+                .collect(Collectors.toMap(m -> m.getStation().getId(), m -> m));
+
         var stationsWithLatestMeasurements = stationRepository.findAll().stream()
                 .map(station -> {
-                    var latestMeasurement = stationRepository.findLatestMeasurementByStation(station.getId());
-                    return stationMapper.toDtoWithMeasurements(station, latestMeasurement);
+                    var latest = latestByStationId.get(station.getId());
+                    return stationMapper.toDtoWithMeasurements(
+                            station, latest == null ? List.of() : List.of(latest));
                 })
                 .sorted((s1, s2) -> {
                     var m1 = s1.getMeasurements().isEmpty() ? null : s1.getMeasurements().get(0);
