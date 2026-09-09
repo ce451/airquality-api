@@ -20,14 +20,23 @@ public interface MeasurementRepository extends JpaRepository<Measurement, UUID> 
     List<Measurement> findAllByOrderByTimestampDesc(Pageable pageable);
 
     /**
-     * Newest measurement of every station in a single query (Postgres
-     * {@code DISTINCT ON}), backed by idx_measurement_station_timestamp.
-     * Replaces the previous one-query-per-station loop.
+     * Newest measurement of every station in one repository round-trip. The
+     * LATERAL join does an O(log n) top-1 index lookup per station via
+     * idx_measurement_station_timestamp (a plain {@code DISTINCT ON} would scan
+     * the whole index - Postgres has no loose index scan). Replaces the
+     * previous one-repository-call-per-station loop. Note: Hibernate still
+     * resolves each row's eager {@code station} reference with a small lookup
+     * inside the same session; keep {@code Measurement.station} EAGER, the
+     * caller reads {@code getStation().getId()} after the session closed.
      */
     @Query(value = """
-            SELECT DISTINCT ON (station_id) *
-            FROM measurement
-            ORDER BY station_id, "timestamp" DESC
+            SELECT m.* FROM station s
+            JOIN LATERAL (
+                SELECT * FROM measurement
+                WHERE station_id = s.id
+                ORDER BY "timestamp" DESC
+                LIMIT 1
+            ) m ON true
             """, nativeQuery = true)
     List<Measurement> findLatestPerStation();
 

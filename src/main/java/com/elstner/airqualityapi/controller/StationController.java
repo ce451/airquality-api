@@ -130,9 +130,15 @@ public class StationController {
         return ResponseEntity.ok(stationMapper.toDtoWithMeasurements(station, measurements));
     }
 
-    /** Lower bound for a measurement window; the container runs UTC, matching the UTC-naive column. */
+    /**
+     * Lower bound for a measurement window; the container runs UTC, matching the
+     * UTC-naive column. The window is clamped to [1 minute, 60 days]: retention
+     * deletes everything past 30 days anyway, and an unclamped value like
+     * Long.MAX_VALUE would overflow minusMinutes into a 500.
+     */
     private static ZonedDateTime cutoff(long minutes) {
-        return LocalDateTime.now().minusMinutes(minutes).atZone(ZoneId.systemDefault());
+        long clamped = Math.clamp(minutes, 1, 60L * 24 * 60);
+        return LocalDateTime.now().minusMinutes(clamped).atZone(ZoneId.systemDefault());
     }
 
     @PostMapping("/stations")

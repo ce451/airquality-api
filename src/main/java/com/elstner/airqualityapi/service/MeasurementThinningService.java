@@ -69,7 +69,7 @@ public class MeasurementThinningService {
      * age into the slower tiers at most one schedule period late, which only
      * means temporarily finer resolution there - never data loss.
      */
-    @Scheduled(cron = "${measurement.thinning.cron:0 */5 * * * ?}")
+    @Scheduled(cron = "${measurement.thinning.tier1.cron:${measurement.thinning.cron:0 */5 * * * ?}}")
     public void thinTier1() {
         ZonedDateTime now = ZonedDateTime.now();
         int removed = thinBand(tier1IntervalSeconds,
