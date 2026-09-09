@@ -11,7 +11,7 @@ public class StationWithMeasurementsDto {
     private StationStatus status;
     private Long stationGroupId;
     private Integer displayOrder;
-    private List<MeasurementDto> measurements;
+    private List<MeasurementPointDto> measurements;
 
     public Long getId() {
         return id;
@@ -53,11 +53,11 @@ public class StationWithMeasurementsDto {
 
     public void setDisplayOrder(Integer displayOrder) { this.displayOrder = displayOrder; }
 
-    public List<MeasurementDto> getMeasurements() {
+    public List<MeasurementPointDto> getMeasurements() {
         return measurements;
     }
 
-    public void setMeasurements(List<MeasurementDto> measurements) {
+    public void setMeasurements(List<MeasurementPointDto> measurements) {
         this.measurements = measurements;
     }
 }

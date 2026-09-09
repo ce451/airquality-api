@@ -5,6 +5,7 @@ import com.elstner.airqualityapi.model.Station;
 import com.elstner.airqualityapi.model.StationStatus;
 import com.elstner.airqualityapi.repository.MeasurementRepository;
 import com.elstner.airqualityapi.repository.StationRepository;
+import com.elstner.airqualityapi.utils.MeasurementSampler;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
@@ -82,7 +83,8 @@ public class StationController {
     @GetMapping("/stations/{id}/measurements")
     public ResponseEntity<?> getStationWithMeasurements(
             @PathVariable Long id,
-            @RequestParam(name = "minutes", defaultValue = "60") long minutes) {
+            @RequestParam(name = "minutes", defaultValue = "60") long minutes,
+            @RequestParam(name = "maxPoints", required = false) Integer maxPoints) {
 
         Station station = stationRepository.findById(id)
                 .orElse(null);
@@ -93,14 +95,16 @@ public class StationController {
                     .body("Station not found with id: " + id);
         }
 
-        LocalDateTime localCutoff = LocalDateTime.now().minusMinutes(minutes);
-        ZonedDateTime cutoff = localCutoff.atZone(ZoneId.systemDefault());
+        var measurements = MeasurementSampler.sample(
+                measurementRepository.findByStationAndTimestampAfterOrderByTimestampDesc(station, cutoff(minutes)),
+                maxPoints);
 
-        var measurements = measurementRepository
-                .findByStationAndTimestampAfterOrderByTimestampDesc(station, cutoff);
-
-//        return ResponseEntity.ok(new StationWithMeasurementsModel(station, measurements));
         return ResponseEntity.ok(stationMapper.toDtoWithMeasurements(station, measurements));
+    }
+
+    /** Lower bound for a measurement window; the container runs UTC, matching the UTC-naive column. */
+    private static ZonedDateTime cutoff(long minutes) {
+        return LocalDateTime.now().minusMinutes(minutes).atZone(ZoneId.systemDefault());
     }
 
     @PostMapping("/stations")
