@@ -115,7 +115,7 @@ public class StationController {
         stationRepository.save(station);
         return ResponseEntity
                 .status(HttpStatus.CREATED)
-                .body(station);
+                .body(stationMapper.toStationDto(station));
     }
 
     @PutMapping("/stations/{id}")
@@ -138,7 +138,7 @@ public class StationController {
                     .body(null);
         }
 
-        return ResponseEntity.ok(updatedStation);
+        return ResponseEntity.ok(stationMapper.toStationDto(updatedStation));
     }
 
     @PatchMapping("/stations/{id}/status")
@@ -155,7 +155,7 @@ public class StationController {
                     .status(HttpStatus.NOT_FOUND)
                     .body(null);
         }
-        return ResponseEntity.ok(updatedStation);
+        return ResponseEntity.ok(stationMapper.toStationDto(updatedStation));
     }
 
     @DeleteMapping("/stations/{id}")

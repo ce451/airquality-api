@@ -1,5 +1,6 @@
 package com.elstner.airqualityapi.model;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import jakarta.persistence.*;
 
 import java.util.ArrayList;
@@ -26,6 +27,10 @@ public class Station {
 
     private Integer displayOrder;
 
+    // @JsonIgnore: if a Station entity ever reaches Jackson directly, the lazy
+    // collection must not be serialized (whole measurement history) or touched
+    // outside a session (open-in-view is disabled).
+    @JsonIgnore
     @OneToMany(mappedBy = "station", cascade = CascadeType.ALL, orphanRemoval = true, fetch = FetchType.LAZY)
     private List<Measurement> measurements = new ArrayList<>();
 

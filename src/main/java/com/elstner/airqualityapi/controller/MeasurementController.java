@@ -78,7 +78,6 @@ public class MeasurementController {
         var newMeasurement = new Measurement(station, measurement.getTemperature(), measurement.getHumidity(), measurement.getVoltage());
 
         measurementRepository.save(newMeasurement);
-        var ret = measurementMapper.toDto(newMeasurement);
 
         MeasurementWithStationDto webSocketUpdate = new MeasurementWithStationDto();
         webSocketUpdate.setId(newMeasurement.getId());
