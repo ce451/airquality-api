@@ -80,6 +80,28 @@ public class StationController {
         return  ResponseEntity.ok(stationsWithLatestMeasurements);
     }
 
+    /**
+     * Batch variant of {@code /stations/{id}/measurements}: recent measurements for
+     * ALL stations in one response. Collapses the dashboard's N per-card requests
+     * into a single round-trip, which matters on high-latency links.
+     */
+    @GetMapping("/stations/measurements")
+    public ResponseEntity<?> getAllStationsWithMeasurements(
+            @RequestParam(name = "minutes", defaultValue = "60") long minutes,
+            @RequestParam(name = "maxPoints", required = false) Integer maxPoints) {
+
+        ZonedDateTime cutoff = cutoff(minutes);
+        var stations = stationRepository.findAll().stream()
+                .map(station -> stationMapper.toDtoWithMeasurements(
+                        station,
+                        MeasurementSampler.sample(
+                                measurementRepository.findByStationAndTimestampAfterOrderByTimestampDesc(station, cutoff),
+                                maxPoints)))
+                .toList();
+
+        return ResponseEntity.ok(stations);
+    }
+
     @GetMapping("/stations/{id}/measurements")
     public ResponseEntity<?> getStationWithMeasurements(
             @PathVariable Long id,
