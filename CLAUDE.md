@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Spring Boot REST API for collecting and managing air quality measurements from IoT weather stations. The API automatically registers new stations by IP address, stores temperature/humidity/voltage data in PostgreSQL, and publishes real-time updates via WebSocket.
 
-**Version:** 0.6.0 (managed in `application.properties`)
+**Version:** 0.7.0 (managed in `application.properties`)
 
 ## Technology Stack
 
@@ -68,8 +68,11 @@ The Docker setup includes:
 ### Layered Architecture
 
 **Controllers** (`controller/`) - REST endpoints
-- `MeasurementController` - POST /measurements for IoT devices, GET for retrieving data
-- `StationController` - Full CRUD + specialized endpoints like `/stations/latestMeasurement`
+- `MeasurementController` - POST /measurements for IoT devices; GET /measurements is a newest-first dump capped via `?limit=` (default 1000, max 10000)
+- `StationController` - Full CRUD + specialized endpoints:
+  - `GET /stations/{id}/measurements?minutes=X&maxPoints=N` — time-window series; optional `maxPoints` downsamples server-side (evenly strided, newest+oldest kept, see `MeasurementSampler`)
+  - `GET /stations/measurements?minutes=X&maxPoints=N` — **batch**: the same series for ALL stations in one response (used by the dashboard to avoid N per-card requests)
+  - `GET /stations/latestMeasurement` — newest reading per station (single `DISTINCT ON` query)
 - `StationGroupController` - Manage station groupings
 - `VersionController` - Returns application version from properties
 
@@ -77,11 +80,11 @@ The Docker setup includes:
 - `StationServiceImpl` - Handles auto-registration: `getOrCreateStation(ipAddress)`
 - `MeasurementPublisher` - Publishes new measurements to WebSocket topic `/topic/measurements`
 - `MeasurementCleanupService` - `@Scheduled` daily 02:00; deletes measurements older than `measurement.retention.days` (30)
-- `MeasurementThinningService` - `@Scheduled` every 5 min; cascaded downsampling of old measurements (see "Scheduled Data Lifecycle")
+- `MeasurementThinningService` - three `@Scheduled` tiers (5 min / hourly / daily); cascaded downsampling of old measurements (see "Scheduled Data Lifecycle")
 
 **Repositories** (`repository/`) - Spring Data JPA repositories
 - Custom queries like `findByStationAndTimestampAfterOrderByTimestampDesc`
-- `findLatestMeasurementByStation` for most recent reading
+- `findLatestPerStation` — native `DISTINCT ON (station_id)` for the newest reading of every station in one query
 - `deleteByTimestampBefore` (retention cleanup) and `thinBucket(intervalSeconds, start, end)` — a native windowed `DELETE` that keeps one row per `(station, time-bucket)` for downsampling
 
 **Mappers** (`mapper/`) - MapStruct interfaces for entity ↔ DTO conversion
@@ -90,7 +93,9 @@ The Docker setup includes:
 
 **DTOs** (`dto/`) - Data transfer objects
 - Separate DTOs for different response shapes (e.g., `StationDto`, `StationWithMeasurementsDto`)
-- `MeasurementWithStationDto` used for WebSocket updates
+- `MeasurementPointDto` — compact chart point (no `id`/`voltage`, ~35% smaller) used for all measurement **lists**; `MeasurementDto` remains for single-measurement responses
+- `MeasurementWithStationDto` used for WebSocket updates (shape unchanged, still carries `id`/`voltage`)
+- Write endpoints (POST/PUT/PATCH `/stations`) return `StationDto`, never the entity (`Station.measurements` is additionally `@JsonIgnore`d)
 
 ### Key Workflow: Receiving Measurements
 
@@ -105,7 +110,8 @@ The Docker setup includes:
 `@EnableScheduling` is active on `AirQualityApiApplication`. Two scheduled tasks keep measurement volume in check (sensors POST every ~15s since the 2026-06-08 SHT3x changeover, so the table grows fast):
 
 - **Cleanup** (`MeasurementCleanupService`, daily 02:00, cron `measurement.cleanup.cron`): hard-deletes measurements older than `measurement.retention.days` (default 30).
-- **Thinning / downsampling** (`MeasurementThinningService`, every 5 min, cron `measurement.thinning.cron`): progressively decimates older data — keeps one measurement per `(station, time-bucket)` and deletes the rest. Cascade (configurable via `measurement.thinning.tierN.{after-minutes,interval-seconds}`): >10 min → 30s, >1 h → 60s, >1 day → 300s. The last 10 minutes are untouched. Idempotent (re-running a band deletes nothing). The **first** production run is a large one-off delete (~90% of rows) — take a `pg_dump` backup first and run `VACUUM (ANALYZE) measurement` afterward.
+- **Thinning / downsampling** (`MeasurementThinningService`): progressively decimates older data — keeps one measurement per `(station, time-bucket)` and deletes the rest. Cascade (configurable via `measurement.thinning.tierN.{after-minutes,interval-seconds}`): >10 min → 30s, >1 h → 60s, >1 day → 300s. The last 10 minutes are untouched. Idempotent (re-running a band deletes nothing). Each tier has its **own schedule** (tier 1 every 5 min `measurement.thinning.cron`, tier 2 hourly `…tier2.cron`, tier 3 daily 03:23 `…tier3.cron`): the DELETE re-scans its whole band per run, so the wide bands must not run every 5 minutes (that caused sustained I/O and index bloat — 144 MB indexes over a 9.4 MB heap, observed 2026-09).
+- **Ops note:** the constant delete/insert churn still bloats the B-tree indexes slowly; if `pg_indexes_size('measurement')` grows far beyond the heap size again, run `REINDEX TABLE CONCURRENTLY measurement`.
 
 **Timestamp storage gotcha:** the `measurement.timestamp` column is `timestamp without time zone` storing **UTC-naive** values; the deployed API container runs in **UTC**, so `ZonedDateTime.now()` aligns with stored values. Time-window queries depend on this — compute boundaries in `ZonedDateTime`/SQL `now()` (UTC), not local wall-clock.
 
@@ -137,7 +143,8 @@ Docker: Points to `db` service container
 
 ### Important Settings
 - Timezone: `Europe/Vienna` for Jackson **serialization** only; measurements are **stored UTC-naive** and the container runs UTC (see "Timestamp storage gotcha")
-- JPA: `show-sql=true` for debugging
+- JPA: `show-sql=false` (was flooding prod logs — 4 INSERTs/min/station); `open-in-view=false` (connections are released before response serialization; controllers must only serialize DTOs, nothing lazy)
+- HTTP compression: `server.compression.enabled=true` for JSON (~5x smaller measurement lists); nginx in the UI container compresses as well
 - Flyway: **enabled** in `application.properties` (`spring.flyway.enabled=true`, `locations=classpath:db/migration`); history baselined through V9
 
 ## Code Patterns
