@@ -11,18 +11,17 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.test.util.ReflectionTestUtils;
 
 import java.time.ZonedDateTime;
-import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatCode;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.anyLong;
-import static org.mockito.Mockito.times;
+import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 
 /**
- * Unit test for the cascade/boundary logic of {@link MeasurementThinningService}.
+ * Unit test for the band/boundary logic of {@link MeasurementThinningService}.
  * The actual SQL behaviour (idempotency, "keep earliest per bucket") is covered by
  * {@link com.elstner.airqualityapi.repository.MeasurementRepositoryThinningTest}.
  */
@@ -46,41 +45,45 @@ class MeasurementThinningServiceTest {
         ReflectionTestUtils.setField(service, "tier3IntervalSeconds", 300L);
     }
 
-    @Test
-    void thinsThreeContiguousBandsWithCascadingResolution() {
+    /**
+     * Runs one tier and asserts its band edges. Boundaries are bracketed with
+     * before/after using the same arithmetic the service uses (minus
+     * minutes/days), so DST can't make it flaky.
+     */
+    private void assertBand(Runnable tier, long expectedInterval,
+                            java.util.function.Function<ZonedDateTime, ZonedDateTime> startEdge,
+                            java.util.function.Function<ZonedDateTime, ZonedDateTime> endEdge) {
         when(measurementRepository.thinBucket(anyLong(), any(), any())).thenReturn(0);
 
         ZonedDateTime before = ZonedDateTime.now();
-        service.thinMeasurements();
+        tier.run();
         ZonedDateTime after = ZonedDateTime.now();
 
-        ArgumentCaptor<Long> interval = ArgumentCaptor.forClass(Long.class);
         ArgumentCaptor<ZonedDateTime> start = ArgumentCaptor.forClass(ZonedDateTime.class);
         ArgumentCaptor<ZonedDateTime> end = ArgumentCaptor.forClass(ZonedDateTime.class);
-        verify(measurementRepository, times(3)).thinBucket(interval.capture(), start.capture(), end.capture());
+        verify(measurementRepository).thinBucket(eq(expectedInterval), start.capture(), end.capture());
 
-        List<Long> intervals = interval.getAllValues();
-        List<ZonedDateTime> starts = start.getAllValues();
-        List<ZonedDateTime> ends = end.getAllValues();
+        assertThat(start.getValue()).isBetween(startEdge.apply(before), startEdge.apply(after));
+        assertThat(end.getValue()).isBetween(endEdge.apply(before), endEdge.apply(after));
+        assertThat(start.getValue()).isBefore(end.getValue()); // older edge -> younger edge
+    }
 
-        // Resolution cascade, finest band first: 30s -> 60s -> 300s.
-        assertThat(intervals).containsExactly(30L, 60L, 300L);
+    @Test
+    void tier1ThinsTheTenMinuteToOneHourBandAt30s() {
+        assertBand(service::thinTier1, 30L,
+                now -> now.minusMinutes(60), now -> now.minusMinutes(10));
+    }
 
-        // Each band boundary is computed off the same "now"; bracket it with before/after.
-        // Same arithmetic the service uses (minus minutes/days), so DST can't make it flaky.
-        assertThat(ends.get(0)).isBetween(before.minusMinutes(10), after.minusMinutes(10));     // band1 end   = now-10min
-        assertThat(starts.get(0)).isBetween(before.minusMinutes(60), after.minusMinutes(60));   // band1 start = now-1h
-        assertThat(starts.get(1)).isBetween(before.minusMinutes(1440), after.minusMinutes(1440)); // band2 start = now-1day
-        assertThat(starts.get(2)).isBetween(before.minusDays(30), after.minusDays(30));         // band3 start = now-retention
+    @Test
+    void tier2ThinsTheOneHourToOneDayBandAt60s() {
+        assertBand(service::thinTier2, 60L,
+                now -> now.minusMinutes(1440), now -> now.minusMinutes(60));
+    }
 
-        // Bands are contiguous and non-overlapping: the younger band starts where the older one ends.
-        assertThat(starts.get(0)).isEqualTo(ends.get(1));
-        assertThat(starts.get(1)).isEqualTo(ends.get(2));
-
-        // Every band runs older edge -> younger edge.
-        assertThat(starts.get(0)).isBefore(ends.get(0));
-        assertThat(starts.get(1)).isBefore(ends.get(1));
-        assertThat(starts.get(2)).isBefore(ends.get(2));
+    @Test
+    void tier3ThinsTheOneDayToRetentionBandAt300s() {
+        assertBand(service::thinTier3, 300L,
+                now -> now.minusDays(30), now -> now.minusMinutes(1440));
     }
 
     @Test
@@ -88,6 +91,10 @@ class MeasurementThinningServiceTest {
         when(measurementRepository.thinBucket(anyLong(), any(), any()))
                 .thenThrow(new RuntimeException("db unavailable"));
 
-        assertThatCode(() -> service.thinMeasurements()).doesNotThrowAnyException();
+        assertThatCode(() -> {
+            service.thinTier1();
+            service.thinTier2();
+            service.thinTier3();
+        }).doesNotThrowAnyException();
     }
 }

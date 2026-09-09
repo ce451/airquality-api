@@ -59,26 +59,40 @@ public class MeasurementThinningService {
     }
 
     /**
-     * Scheduled thinning task. Default: every 5 minutes.
+     * Tier 1 ([1h, 10min) -> 30s). Default: every 5 minutes.
+     * <p>
+     * The tiers run on separate schedules: the DELETE's inner window-function
+     * SELECT re-scans its whole band on every run even when there is nothing
+     * left to delete. Scanning the 50-minute tier-1 band every 5 minutes is
+     * cheap; re-scanning the 23-hour tier-2 and 29-day tier-3 bands at that
+     * rate was sustained I/O plus index churn for near-zero deletions. Rows
+     * age into the slower tiers at most one schedule period late, which only
+     * means temporarily finer resolution there - never data loss.
      */
     @Scheduled(cron = "${measurement.thinning.cron:0 */5 * * * ?}")
-    public void thinMeasurements() {
-        log.info("Starting scheduled measurement thinning");
-
+    public void thinTier1() {
         ZonedDateTime now = ZonedDateTime.now();
-        ZonedDateTime tier1Edge = now.minusMinutes(tier1AfterMinutes);  // 10 min ago
-        ZonedDateTime tier2Edge = now.minusMinutes(tier2AfterMinutes);  // 1 h ago
-        ZonedDateTime tier3Edge = now.minusMinutes(tier3AfterMinutes);  // 1 day ago
-        ZonedDateTime retentionFloor = now.minusDays(retentionDays);    // 30 days ago
+        int removed = thinBand(tier1IntervalSeconds,
+                now.minusMinutes(tier2AfterMinutes), now.minusMinutes(tier1AfterMinutes));
+        log.info("Thinning tier 1 done: removed {} ({}s band)", removed, tier1IntervalSeconds);
+    }
 
-        // Each band is thinned independently: a failure in one (e.g. a lock-wait on the
-        // heavy first run) must not skip the others for this cycle.
-        int t1 = thinBand(tier1IntervalSeconds, tier2Edge, tier1Edge);      // [1h, 10min) -> 30s
-        int t2 = thinBand(tier2IntervalSeconds, tier3Edge, tier2Edge);      // [1d, 1h)    -> 60s
-        int t3 = thinBand(tier3IntervalSeconds, retentionFloor, tier3Edge); // [retention, 1d) -> 300s
+    /** Tier 2 ([1d, 1h) -> 60s). Default: hourly. */
+    @Scheduled(cron = "${measurement.thinning.tier2.cron:0 11 * * * ?}")
+    public void thinTier2() {
+        ZonedDateTime now = ZonedDateTime.now();
+        int removed = thinBand(tier2IntervalSeconds,
+                now.minusMinutes(tier3AfterMinutes), now.minusMinutes(tier2AfterMinutes));
+        log.info("Thinning tier 2 done: removed {} ({}s band)", removed, tier2IntervalSeconds);
+    }
 
-        log.info("Thinning done: removed {} ({}s band), {} ({}s band), {} ({}s band); {} total",
-                t1, tier1IntervalSeconds, t2, tier2IntervalSeconds, t3, tier3IntervalSeconds, t1 + t2 + t3);
+    /** Tier 3 ([retention, 1d) -> 300s). Default: daily, after the 02:00 cleanup. */
+    @Scheduled(cron = "${measurement.thinning.tier3.cron:0 23 3 * * ?}")
+    public void thinTier3() {
+        ZonedDateTime now = ZonedDateTime.now();
+        int removed = thinBand(tier3IntervalSeconds,
+                now.minusDays(retentionDays), now.minusMinutes(tier3AfterMinutes));
+        log.info("Thinning tier 3 done: removed {} ({}s band)", removed, tier3IntervalSeconds);
     }
 
     /**
