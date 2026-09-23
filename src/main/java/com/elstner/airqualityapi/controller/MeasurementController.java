@@ -76,16 +76,7 @@ public class MeasurementController {
         var newMeasurement = new Measurement(station, measurement.getTemperature(), measurement.getHumidity(), measurement.getVoltage());
 
         measurementRepository.save(newMeasurement);
-
-        MeasurementWithStationDto webSocketUpdate = new MeasurementWithStationDto();
-        webSocketUpdate.setId(newMeasurement.getId());
-        webSocketUpdate.setStationId(station.getId());
-        webSocketUpdate.setTemperature(newMeasurement.getTemperature());
-        webSocketUpdate.setHumidity(newMeasurement.getHumidity());
-        webSocketUpdate.setAbsoluteHumidity(newMeasurement.getAbsoluteHumidity());
-        webSocketUpdate.setVoltage(newMeasurement.getVoltage());
-        webSocketUpdate.setTimestamp(newMeasurement.getTimestamp());
-        measurementPublisher.publishMeasurementUpdate(webSocketUpdate);
+        measurementPublisher.publishMeasurementUpdate(newMeasurement);
 
         return ResponseEntity.ok(measurementMapper.toDto(newMeasurement));
     }

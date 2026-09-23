@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Spring Boot REST API for collecting and managing air quality measurements from IoT weather stations. The API automatically registers new stations by IP address, stores temperature/humidity/voltage data in PostgreSQL, and publishes real-time updates via WebSocket.
 
-**Version:** 0.7.0 (managed in `application.properties`)
+**Version:** 0.8.0 (managed in `application.properties`)
 
 ## Technology Stack
 
@@ -81,6 +81,7 @@ The Docker setup includes:
 - `MeasurementPublisher` - Publishes new measurements to WebSocket topic `/topic/measurements`
 - `MeasurementCleanupService` - `@Scheduled` daily 02:00; deletes measurements older than `measurement.retention.days` (30)
 - `MeasurementThinningService` - three `@Scheduled` tiers (5 min / hourly / daily); cascaded downsampling of old measurements (see "Scheduled Data Lifecycle")
+- `FeuerwehrWeizImportService` - `@Scheduled` every 10 min (`external.ff-weiz.*`); scrapes the Stadtfeuerwehr Weiz weather page (inline Google-Charts arrays, last 24 h @ 5 min, Vienna wall-clock without year, humidity as fraction) via `FeuerwehrWeizParser` and stores readings newer than the station's latest measurement (back-fills gaps). Virtual station identified by pseudo address `ext:ff-weiz` in `ip_address`. Parse failure → WARN log only.
 
 **Repositories** (`repository/`) - Spring Data JPA repositories
 - Custom queries like `findByStationAndTimestampAfterOrderByTimestampDesc`
@@ -118,9 +119,9 @@ The Docker setup includes:
 ### Database Migrations
 
 Flyway migrations in `src/main/resources/db/migration/`
-- Currently on **V10** (indexes on `measurement(station_id, timestamp)` and `(timestamp)` — before V10 the only index was the PK on `id`)
-- Notable migrations: V4 added absolute humidity, V5 added voltage, V8-V9 refactored grouping, V10 added measurement indexes
-- The live DB's history is baselined (V1) through V9, so new migrations start at **V10**. **Do not edit already-applied migration files** (Flyway checksum validation) — only add new `V{n}__*.sql`.
+- Currently on **V12** (`station.mac_address` + partial unique index)
+- Notable migrations: V4 added absolute humidity, V5 added voltage, V8-V9 refactored grouping, V10 added measurement indexes, V11 status as string, V12 MAC address
+- The live DB's history is baselined (V1) through V9; next new migration is **V13**. **Do not edit already-applied migration files** (Flyway checksum validation) — only add new `V{n}__*.sql`.
 
 **Important:** `spring.jpa.hibernate.ddl-auto=validate` in production - schema changes MUST use Flyway migrations.
 

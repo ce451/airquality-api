@@ -12,12 +12,15 @@ import org.springframework.transaction.annotation.Transactional;
 import java.time.LocalDateTime;
 import java.time.ZonedDateTime;
 import java.util.List;
+import java.util.Optional;
 import java.util.UUID;
 
 public interface MeasurementRepository extends JpaRepository<Measurement, UUID> {
     List<Measurement> findByStationAndTimestampAfterOrderByTimestampDesc(Station station, ZonedDateTime timestamp);
 
     List<Measurement> findAllByOrderByTimestampDesc(Pageable pageable);
+
+    Optional<Measurement> findTopByStationOrderByTimestampDesc(Station station);
 
     /**
      * Newest measurement of every station in one repository round-trip. The
