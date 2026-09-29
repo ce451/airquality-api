@@ -6,7 +6,7 @@ This file provides guidance to Claude Code (claude.ai/code) when working with co
 
 Spring Boot REST API for collecting and managing air quality measurements from IoT weather stations. The API automatically registers new stations by IP address, stores temperature/humidity/voltage data in PostgreSQL, and publishes real-time updates via WebSocket.
 
-**Version:** 0.8.1 (managed in `application.properties`)
+**Version:** 1.8.1 (managed in `application.properties`)
 
 ## Technology Stack
 
