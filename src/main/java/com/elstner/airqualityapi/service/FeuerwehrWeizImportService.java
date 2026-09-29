@@ -60,7 +60,7 @@ public class FeuerwehrWeizImportService {
         this.restClient = restClientBuilder.requestFactory(requestFactory).build();
     }
 
-    @Scheduled(cron = "${external.ff-weiz.cron:0 2/10 * * * ?}")
+    @Scheduled(cron = "${external.ff-weiz.cron:0 2/5 * * * ?}")
     public void importMeasurements() {
         try {
             String html = restClient.get().uri(url).retrieve().body(String.class);

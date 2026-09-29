@@ -81,7 +81,7 @@ The Docker setup includes:
 - `MeasurementPublisher` - Publishes new measurements to WebSocket topic `/topic/measurements`
 - `MeasurementCleanupService` - `@Scheduled` daily 02:00; deletes measurements older than `measurement.retention.days` (30)
 - `MeasurementThinningService` - three `@Scheduled` tiers (5 min / hourly / daily); cascaded downsampling of old measurements (see "Scheduled Data Lifecycle")
-- `FeuerwehrWeizImportService` - `@Scheduled` every 10 min (`external.ff-weiz.*`); scrapes the Stadtfeuerwehr Weiz weather page (inline Google-Charts arrays, last 24 h @ 5 min, Vienna wall-clock without year, humidity as fraction) via `FeuerwehrWeizParser` and stores readings newer than the station's latest measurement (back-fills gaps). Virtual station identified by pseudo address `ext:ff-weiz` in `ip_address`. Parse failure → WARN log only.
+- `FeuerwehrWeizImportService` - `@Scheduled` every 5 min at :02, :07, :12, … (`external.ff-weiz.cron`; the source has 5-min readings; at a 10-min cadence the newest value regularly exceeded the UI's 20-min stale marker); scrapes the Stadtfeuerwehr Weiz weather page (inline Google-Charts arrays, last 24 h @ 5 min, Vienna wall-clock without year, humidity as fraction) via `FeuerwehrWeizParser` and stores readings newer than the station's latest measurement (back-fills gaps). Virtual station identified by pseudo address `ext:ff-weiz` in `ip_address`. Parse failure → WARN log only.
 
 **Repositories** (`repository/`) - Spring Data JPA repositories
 - Custom queries like `findByStationAndTimestampAfterOrderByTimestampDesc`
